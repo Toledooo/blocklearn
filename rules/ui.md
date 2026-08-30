@@ -19,3 +19,9 @@ Este contexto aplica-se aos arquivos localizados nos diretórios `src/components
 ## 5. Estilização
 * **Consistência Visual:** Utilize a abordagem de CSS definida no projeto (CSS Modules ou Tailwind) de forma consistente.
 * **Acessibilidade Básica:** Garanta contraste adequado e uso correto de *tags* semânticas. Os balões explicativos do fluxo educacional devem ser o ponto focal da tela quando ativados.
+
+## 6. Conteúdo Didático e Textos Explicativos (Copywriting)
+Como o objetivo do sistema é o ensino guiado de iniciantes, a IA deve gerar automaticamente os textos explicativos para cada interação, seguindo estas regras:
+* **Tom de Voz:** Didático, encorajador e acessível. Evite jargões excessivos; quando usá-los (ex: Nonce, Hash), explique-os imediatamente de forma analógica.
+* **Foco no "Porquê":** Cada balão explicativo que surgir na tela não deve apenas narrar o que está acontecendo (ex: "O hash foi calculado"), mas explicar o seu propósito na rede (ex: "O hash foi calculado para selar digitalmente este bloco. Qualquer alteração futura mudará este selo, alertando a rede").
+* **Gatilhos Visuais:** O texto deve sempre referenciar o que está acontecendo visualmente na tela naquele exato momento (ex: "Observe como as transações foram agrupadas...").
