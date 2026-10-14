@@ -30,3 +30,11 @@ Como o objetivo do sistema é o ensino guiado de iniciantes, a IA deve gerar aut
 * Todo texto didático e títulos principais devem aparecer como se fossem digitados (typewriter) com um cursor/blink indicador de campo de texto, reforçando a analogia de "entrada de dados" em uma Blockchain.
 * Implementação: usar Framer Motion com transição de texto por caractere + indicador visual de cursor (|) piscante após o texto completo.
 * Aplicar em balões explicativos e títulos de seção.
+
+## 8. Design Responsivo
+* **Mobile-first:** Escreva os estilos base para telas pequenas e use os breakpoints do Tailwind (`sm:`, `md:`, `lg:`, `xl:`) para ampliar o layout. Toda tela deve funcionar de 360px até desktop largo, sem rolagem horizontal.
+* **Medidas fluidas:** Evite larguras e posições fixas em `px` (ex: `right-[161px]`, `top-[701px]` vindos do Figma). Converta-as para layouts com flex/grid, `max-w-*`, `w-full`, espaçamentos e `clamp()`/classes responsivas. Tamanhos de fonte grandes (ex: título de 128px) devem escalar por breakpoint (ex: `text-5xl md:text-8xl lg:text-[128px]`).
+* **Altura da tela:** Prefira `min-h-screen`/`min-h-dvh` a `h-screen`, para que o conteúdo não seja cortado em telas baixas ou com teclado virtual aberto.
+* **Alvos de toque:** Botões e campos devem ter no mínimo 44x44px em telas de toque.
+* **Animações:** Balões explicativos, modais e o diagrama D3 (usar `viewBox` e largura 100% no SVG) devem se adaptar à largura disponível; respeite `prefers-reduced-motion` (`useReducedMotion` do Framer Motion).
+* **Fidelidade ao Figma:** O design do Figma é a referência para o desktop; nos demais tamanhos, preserve a hierarquia visual, as cores e a tipografia, adaptando apenas o layout.
