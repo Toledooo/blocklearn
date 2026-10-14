@@ -25,3 +25,7 @@ Como o objetivo do sistema é o ensino guiado de iniciantes, a IA deve gerar aut
 * **Tom de Voz:** Didático, encorajador e acessível. Evite jargões excessivos; quando usá-los (ex: Nonce, Hash), explique-os imediatamente de forma analógica.
 * **Foco no "Porquê":** Cada balão explicativo que surgir na tela não deve apenas narrar o que está acontecendo (ex: "O hash foi calculado"), mas explicar o seu propósito na rede (ex: "O hash foi calculado para selar digitalmente este bloco. Qualquer alteração futura mudará este selo, alertando a rede").
 * **Gatilhos Visuais:** O texto deve sempre referenciar o que está acontecendo visualmente na tela naquele exato momento (ex: "Observe como as transações foram agrupadas...").
+## 7. Animação de Texto Digitado (Typewriter)
+* Todo texto didático e títulos principais devem aparecer como se fossem digitados (typewriter) com um cursor/blink indicador de campo de texto, reforçando a analogia de "entrada de dados" em uma Blockchain.
+* Implementação: usar Framer Motion com transição de texto por caractere + indicador visual de cursor (|) piscante após o texto completo.
+* Aplicar em balões explicativos e títulos de seção.
