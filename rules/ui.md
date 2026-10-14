@@ -17,7 +17,7 @@ Este contexto aplica-se aos arquivos localizados nos diretórios `src/components
 * **Timing Didático:** As animações não podem ser instantâneas a ponto de o usuário perder a ação, nem lentas a ponto de entediar. Se um bloco está sendo minerado, forneça um *feedback* visual claro (como um *spinner* ou contador de tentativas falsas) para simular o esforço computacional antes de revelar o hash final.
 
 ## 5. Estilização
-* **Consistência Visual:** Utilize a abordagem de CSS definida no projeto (CSS Modules ou Tailwind) de forma consistente.
+* **Consistência Visual:** Utilize exclusivamente o Tailwind CSS para estilização, de forma consistente. Não use CSS Modules.
 * **Acessibilidade Básica:** Garanta contraste adequado e uso correto de *tags* semânticas. Os balões explicativos do fluxo educacional devem ser o ponto focal da tela quando ativados.
 
 ## 6. Conteúdo Didático e Textos Explicativos (Copywriting)
@@ -25,6 +25,7 @@ Como o objetivo do sistema é o ensino guiado de iniciantes, a IA deve gerar aut
 * **Tom de Voz:** Didático, encorajador e acessível. Evite jargões excessivos; quando usá-los (ex: Nonce, Hash), explique-os imediatamente de forma analógica.
 * **Foco no "Porquê":** Cada balão explicativo que surgir na tela não deve apenas narrar o que está acontecendo (ex: "O hash foi calculado"), mas explicar o seu propósito na rede (ex: "O hash foi calculado para selar digitalmente este bloco. Qualquer alteração futura mudará este selo, alertando a rede").
 * **Gatilhos Visuais:** O texto deve sempre referenciar o que está acontecendo visualmente na tela naquele exato momento (ex: "Observe como as transações foram agrupadas...").
+
 ## 7. Animação de Texto Digitado (Typewriter)
 * Todo texto didático e títulos principais devem aparecer como se fossem digitados (typewriter) com um cursor/blink indicador de campo de texto, reforçando a analogia de "entrada de dados" em uma Blockchain.
 * Implementação: usar Framer Motion com transição de texto por caractere + indicador visual de cursor (|) piscante após o texto completo.
