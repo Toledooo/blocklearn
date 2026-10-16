@@ -30,7 +30,7 @@ Separação de camadas (detalhes nas regras importadas abaixo):
 
 ## Estado atual
 
-Existem `src/App.jsx` (dono do progresso do tour: `step`, `reached` e a transação; alterna `HomeScreen` -> `views/TransactionView`, que recebe tudo por props), `src/views/TransactionView.jsx` (Etapas 1 e 2 do tour, com trilha clicável só para etapas já concluídas), `src/core/Transaction.js` (+ `Transaction.test.js`, rode com `node`) e os componentes `HomeScreen`, `Typewriter`, `FadeIn`, `StepIndicator`, `TextField` e `BlockRow` em `src/components/`. Os diretórios `utils/` ainda não foram criados.
+Existem `src/App.jsx` (dono do progresso do tour: `step`, `reached` e a transação; alterna `HomeScreen` -> `views/TransactionView` (etapas 1 e 2, botão "Continuar") -> `views/HashView` (etapa 3, ainda esqueleto)), `src/views/TransactionView.jsx` (Etapas 1 e 2 do tour, com trilha clicável só para etapas já concluídas), `src/core/Transaction.js` (+ `Transaction.test.js`, rode com `node`) e os componentes `HomeScreen`, `Typewriter`, `FadeIn`, `StepIndicator`, `TextField` e `BlockRow` em `src/components/`. Os diretórios `utils/` ainda não foram criados.
 
 ## Agent skills
 

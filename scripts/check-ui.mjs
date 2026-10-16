@@ -90,8 +90,20 @@ async function run(width, height, reduce = true) {
   await page.click('ol button[aria-label="Etapa 2"]')
   await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
 
+  // Continuar leva à etapa 3; a trilha volta à etapa 2 com a transação e o botão intactos
+  const cont = () => [...document.querySelectorAll('button')].find((b) => b.textContent === 'Continuar' && !b.closest('[inert]'))
+  await page.waitForFunction(cont)
+  await noScroll(page, `continuar ${tag}`, mobile)
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'Continuar').click())
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Hashing"]'))
+  assert.ok(await enabled(page, 3), `etapa 3 liberada após continuar ${tag}`)
+  await page.click('ol button[aria-label="Etapa 2"]')
+  await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
+  await page.waitForFunction(cont)
+
   await page.click('ol button[aria-label="Etapa 1"]')
   await page.waitForSelector('input[name=from]')
+  assert.equal(await page.$eval('input[name=from]', (i) => i.value), 'Alice', `dados mantidos ao voltar de outra tela ${tag}`)
   await page.type('input[name=from]', 'x') // editar invalida a etapa 2
   assert.ok(!(await enabled(page, 2)), `editar um campo deve bloquear a etapa 2 ${tag}`)
   await page.close()

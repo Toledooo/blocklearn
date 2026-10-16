@@ -17,10 +17,13 @@ const sentText = () =>
   'Transação enviada! Observe o bloco candidato na parte de baixo da tela: a transação entrou nele. Esse bloco ainda é provisório; só depois da mineração ele será selado e ligado ao bloco anterior.'
 
 // Orquestra a Etapa 1 do Guided Tour: coleta a transação e, ao enviar, avança para a Etapa 2.
-export default function TransactionView({ step, reached, transaction, onSelect, onSend, onInvalidate }) {
-  const [values, setValues] = useState({ from: '', amount: '', to: '' })
-  const [stage, setStage] = useState(0) // 0 título, 1 explicação, 2 instrução, 3 tudo digitado
-  const [shown, setShown] = useState(INTRO) // texto de explicação atual
+export default function TransactionView({ step, reached, transaction, onSelect, onSend, onInvalidate, onContinue }) {
+  // Ao voltar de outra tela a view remonta: recupera os dados e o texto da etapa em vez de recomeçar do zero
+  const [values, setValues] = useState(
+    transaction ? { from: transaction.from, amount: String(transaction.amount), to: transaction.to } : { from: '', amount: '', to: '' },
+  )
+  const [stage, setStage] = useState(reached > 1 ? 3 : 0) // 0 título, 1 explicação, 2 instrução, 3 tudo digitado
+  const [shown, setShown] = useState(() => (step === 2 ? sentText() : reached > 1 ? filledText(values) : INTRO)) // texto de explicação atual
   const [pending, setPending] = useState(null) // 'filled' | 'sent': o texto atual é apagado antes
   const [explained, setExplained] = useState(false) // a explicação pós-preenchimento terminou
 
@@ -60,7 +63,7 @@ export default function TransactionView({ step, reached, transaction, onSelect, 
   return (
     <main className="grid min-h-dvh gap-x-12 gap-y-4 lg:gap-y-3 overflow-x-clip bg-black px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr_auto] lg:px-12 lg:pb-0 lg:pt-6">
       <h1 className="font-rowdies text-4xl leading-tight font-bold text-neon sm:text-6xl lg:col-start-1 lg:row-start-1 lg:self-center lg:text-[clamp(2.25rem,min(5vw,8vh),80px)]">
-        <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage(1)} />
+        <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage((s) => Math.max(s, 1))} />
       </h1>
 
       {/* Trilha na altura do título e centralizada na coluna da direita */}
@@ -135,6 +138,17 @@ export default function TransactionView({ step, reached, transaction, onSelect, 
               </motion.form>
             )}
           </AnimatePresence>
+          {step === 2 && (
+            <FadeIn show={explained}>
+              <button
+                type="button"
+                onClick={onContinue}
+                className="min-h-11 cursor-pointer rounded-[10px] border-3 border-neon bg-neon px-6 py-2 font-mono text-[clamp(1rem,2.6vh,1.5rem)] font-bold text-black"
+              >
+                Continuar
+              </button>
+            </FadeIn>
+          )}
         </div>
       </div>
     </main>
