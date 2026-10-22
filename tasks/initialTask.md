@@ -1,7 +1,7 @@
 # Initial Task: Criação do Projeto + Tela Inicial (Design Figma)
 
 ## 1. Objetivo
-Criar a base do projeto educativo Blockchain (simulador) e implementar a tela inicial conforme o design Figma (`node-id=3-284`): https://www.figma.com/design/nyd8EQ4TGDNha7Z9TgeEI9/Blockchain?node-id=3-284&t=HYzDGaHybABkLA53-4
+Criar a base do projeto educativo Blockchain (simulador) e implementar a tela inicial 100% fiel ao design Figma (`node-id=3-284`): https://www.figma.com/design/nyd8EQ4TGDNha7Z9TgeEI9/Blockchain?node-id=3-284&t=HYzDGaHybABkLA53-4
 
 ## 2. Elementos do Design (Referência Visual)
 - **Fundo:** preto (`#000000`).
