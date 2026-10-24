@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createTransaction, isValidTransaction } from '../core/Transaction'
 import BlockRow from '../components/BlockRow'
+import BottomBar from '../components/BottomBar'
 import FadeIn from '../components/FadeIn'
-import StepIndicator from '../components/StepIndicator'
 import TextField from '../components/TextField'
 import Typewriter from '../components/Typewriter'
 
@@ -17,7 +17,7 @@ const sentText = () =>
   'Transação enviada! Observe o bloco candidato na parte de baixo da tela: a transação entrou nele. Esse bloco ainda é provisório; só depois da mineração ele será selado e ligado ao bloco anterior.'
 
 // Orquestra a Etapa 1 do Guided Tour: coleta a transação e, ao enviar, avança para a Etapa 2.
-export default function TransactionView({ step, reached, transaction, onSelect, onSend, onInvalidate, onContinue }) {
+export default function TransactionView({ step, reached, transaction, onSend, onInvalidate, onContinue }) {
   // Ao voltar de outra tela a view remonta: recupera os dados e o texto da etapa em vez de recomeçar do zero
   const [values, setValues] = useState(
     transaction ? { from: transaction.from, amount: String(transaction.amount), to: transaction.to } : { from: '', amount: '', to: '' },
@@ -50,26 +50,20 @@ export default function TransactionView({ step, reached, transaction, onSelect, 
     e.preventDefault()
     if (!allFilled || !explained) return
     onSend(createTransaction(values))
-    changeText('sent')
   }
 
-  // Volta (ou reavança) só até etapas já concluídas; a explicação acompanha a etapa exibida
-  const goTo = (n) => {
-    if (n === step || n > reached) return
-    onSelect(n)
-    changeText(n === 1 ? 'filled' : 'sent')
+  // A trilha (no App) troca a etapa; a explicação acompanha a etapa exibida
+  const [lastStep, setLastStep] = useState(step)
+  if (step !== lastStep) {
+    setLastStep(step)
+    changeText(step === 1 ? 'filled' : 'sent')
   }
 
   return (
-    <main className="grid min-h-dvh gap-x-12 gap-y-4 lg:gap-y-3 overflow-x-clip bg-black px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr_auto] lg:px-12 lg:pb-0 lg:pt-6">
+    <main className="relative grid min-h-dvh gap-x-12 gap-y-4 lg:gap-y-3 overflow-x-clip bg-black px-5 pt-[4.5rem] pb-8 sm:px-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr_auto] lg:px-12 lg:pb-0 lg:pt-6">
       <h1 className="font-rowdies text-4xl leading-tight font-bold text-neon sm:text-6xl lg:col-start-1 lg:row-start-1 lg:self-center lg:text-[clamp(2.25rem,min(5vw,8vh),80px)]">
         <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage((s) => Math.max(s, 1))} />
       </h1>
-
-      {/* Trilha na altura do título e centralizada na coluna da direita */}
-      <FadeIn show={typed} className="self-start lg:col-start-2 lg:row-start-1 lg:self-center lg:justify-self-center">
-        <StepIndicator current={step} reached={reached} onSelect={goTo} />
-      </FadeIn>
 
       {stage >= 1 && (
         <p className="font-mono text-base leading-normal font-bold text-white lg:col-start-1 lg:row-start-2 lg:text-[clamp(0.875rem,min(1.6vw,2.4vh),1.5rem)]">
@@ -138,7 +132,14 @@ export default function TransactionView({ step, reached, transaction, onSelect, 
               </motion.form>
             )}
           </AnimatePresence>
-          {step === 2 && (
+        </div>
+      </div>
+
+      {/* Mesma posição do botão "Próximo" da tela de hash */}
+      {step === 2 && (
+        <BottomBar
+          floating
+          right={
             <FadeIn show={explained}>
               <button
                 type="button"
@@ -148,9 +149,9 @@ export default function TransactionView({ step, reached, transaction, onSelect, 
                 Continuar
               </button>
             </FadeIn>
-          )}
-        </div>
-      </div>
+          }
+        />
+      )}
     </main>
   )
 }

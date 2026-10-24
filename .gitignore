@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Relato de desenvolvimento (TCC) e automação local
+
 relato.md
-.claude/hooks/
+.claude/
