@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { animate, motion, useReducedMotion } from 'framer-motion'
 
 // Texto "digitado" caractere a caractere, com cursor "|" piscando ao final.
 // Reforça a analogia de entrada de dados: cada letra é um registro que entra um a um.
 // `showCursor` permite que a tela deixe só o texto mais recente com cursor.
 // `erase` apaga o texto de trás para frente (cursor acompanhando) e avisa por `onErased`.
+// Em vez de um componente por letra (textos longos travavam a página ao montar), o Framer Motion
+// anima um único contador de caracteres e o React só recorta o texto até esse número.
 export default function Typewriter({
   text,
   delay = 0,
@@ -15,43 +17,42 @@ export default function Typewriter({
   onDone,
   onErased,
 }) {
-  const [done, setDone] = useState(false)
   const reduce = useReducedMotion() // quem prefere menos movimento vê o texto de uma vez
+  const chars = [...text]
+  const [shown, setShown] = useState(0)
+  const [done, setDone] = useState(false)
+  const count = useRef(0)
+  const callbacks = useRef({})
 
-  const variants = {
-    show: { transition: { delayChildren: reduce ? 0 : delay, staggerChildren: reduce ? 0 : speed } },
-    gone: { transition: { staggerChildren: reduce ? 0 : eraseSpeed, staggerDirection: -1 } },
-  }
+  useEffect(() => {
+    callbacks.current = { onDone, onErased }
+  })
 
-  const handleComplete = () => {
-    if (erase) return onErased?.()
-    setDone(true)
-    onDone?.()
-  }
+  useEffect(() => {
+    const target = erase ? 0 : [...text].length
+    const controls = animate(count.current, target, {
+      delay: erase || reduce ? 0 : delay,
+      duration: reduce ? 0 : Math.abs(target - count.current) * (erase ? eraseSpeed : speed),
+      ease: 'linear',
+      onUpdate: (v) => {
+        count.current = v
+        setShown(Math.floor(v))
+      },
+      onComplete: () => {
+        count.current = target
+        setShown(target)
+        if (erase) return callbacks.current.onErased?.()
+        setDone(true)
+        callbacks.current.onDone?.()
+      },
+    })
+    return () => controls.stop()
+  }, [text, erase, delay, speed, eraseSpeed, reduce])
 
   return (
-    <motion.span
-      aria-label={text}
-      initial="hidden"
-      animate={erase ? 'gone' : 'show'}
-      variants={variants}
-      onAnimationComplete={handleComplete}
-    >
-      {[...text].map((char, i) => (
-        <motion.span
-          key={i}
-          aria-hidden="true"
-          variants={{
-            hidden: { opacity: 0 },
-            show: { opacity: 1, transition: { duration: 0 } },
-            // display:none faz o cursor "recuar" junto com as letras apagadas
-            gone: { opacity: 0, display: 'none', transition: { duration: 0 } },
-          }}
-        >
-          {char}
-        </motion.span>
-      ))}
-      {(done || erase) && showCursor && (
+    <span aria-label={text}>
+      <span aria-hidden="true">{chars.slice(0, shown).join('')}</span>
+      {(done || erase) && showCursor ? (
         <motion.span
           aria-hidden="true"
           animate={reduce ? { opacity: 1 } : { opacity: [1, 0] }}
@@ -59,7 +60,10 @@ export default function Typewriter({
         >
           |
         </motion.span>
+      ) : (
+        // o resto, invisível, reserva o espaço para o texto não "pular" de linha enquanto é digitado
+        !erase && <span aria-hidden="true" className="invisible">{chars.slice(shown).join('')}</span>
       )}
-    </motion.span>
+    </span>
   )
 }
