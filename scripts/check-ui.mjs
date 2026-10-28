@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import puppeteer from 'puppeteer-core'
 import { createServer } from 'vite'
+import { mineBlock } from '../src/core/Block.js'
 
 const CHROME = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe'
 const server = await createServer({ server: { port: 5199 }, logLevel: 'silent' })
@@ -143,9 +144,64 @@ async function run(width, height, reduce = true) {
   assert.ok(!(await explanation()).includes('completamente diferente'), 'texto trocado de novo')
   await visible('Próximo')
   await click('Próximo')
-  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Mineração"]'))
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Proof of Work"]'))
   await sameTrail('mineração')
   assert.ok(await enabled(page, 4), `etapa 4 liberada após Próximo ${tag}`)
+
+  // Proof of Work: a mineração só começa com a escolha da dificuldade; roleta por posição, travamento e Próximo no fim
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms))
+  const hashAttr = (name) => page.$eval('[data-testid=hash]', (e, n) => e.dataset[n], name)
+  const diffBtn = (n) => `button[aria-label^="Dificuldade ${n}"]`
+  const wait = (fn, ...args) => page.waitForFunction(fn, {}, ...args)
+  const diff = reduce ? 1 : 2
+  const expected = await mineBlock({ from: 'Alice', amount: 50, to: 'Bob' }, diff)
+  await wait((s) => { const b = document.querySelector(s); return b && !b.closest('[inert]') }, diffBtn(1))
+  await noScroll(page, `pow texto 1 ${tag}`, mobile)
+  assert.equal(await hashAttr('state'), 'idle', `a mineração só começa depois da escolha ${tag}`)
+  assert.ok(await hidden('Próximo'))
+  await page.click(diffBtn(diff))
+  assert.ok(await page.$eval(diffBtn(1 + (diff % 3)), (b) => b.disabled), `seletor desabilitado após a escolha ${tag}`)
+  assert.equal(await page.$eval(diffBtn(diff), (b) => b.getAttribute('aria-pressed')), 'true')
+  await wait((d) => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes(`dificuldade ${d}`), diff)
+  await noScroll(page, `pow texto da dificuldade ${tag}`, mobile)
+  if (!reduce) {
+    await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'spinning')
+    const n1 = Number(await page.$eval('[data-testid=nonce]', (e) => e.textContent))
+    const snaps = []
+    for (let i = 0; i < 30; i++) { snaps.push(await hashAttr('hash')); await pause(20) }
+    const changes = snaps.slice(1).map((s, i) => [...s].filter((c, j) => c !== snaps[i][j]).length)
+    assert.ok(changes.some((c) => c > 0 && c < 60) && changes.every((c) => c < 64), `posições do hash devem girar em instantes diferentes ${tag}`)
+    assert.ok(Number(await page.$eval('[data-testid=nonce]', (e) => e.textContent)) > n1, `nonce deve subir durante a mineração ${tag}`)
+    assert.ok(await hidden('Próximo'), `Próximo oculto durante a mineração ${tag}`)
+  }
+  if (!reduce) {
+    await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'locking')
+    const locks = []
+    while ((await hashAttr('state')) === 'locking') { locks.push(await page.$eval('[data-testid=hash]', (e) => [Number(e.dataset.locked), e.dataset.hash])); await pause(30) }
+    for (const [n, h] of locks) assert.equal(h.slice(0, n), expected.hash.slice(0, n), `posições travadas devem ter o valor final ${tag}`)
+    assert.ok(locks.some(([n]) => n > 0 && n < 64) && locks.every(([n], i) => i === 0 || n >= locks[i - 1][0]), `travamento da esquerda para a direita ${tag}`)
+  }
+  await wait(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('Observe o nonce'))
+  await noScroll(page, `pow texto 2 ${tag}`, mobile)
+  await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'done')
+  assert.equal(await hashAttr('hash'), expected.hash, `hash final é o do laço real ${tag}`)
+  assert.ok(expected.hash.startsWith('0'.repeat(diff)))
+  assert.equal(await page.$eval('[data-testid=nonce]', (e) => e.textContent), String(expected.nonce), `nonce final ${tag}`)
+  assert.equal(await page.$eval('[data-testid=candidate-block]', (e) => e.dataset.solved), 'true')
+  await visible('Próximo')
+  await noScroll(page, `pow resolvido ${tag}`, mobile)
+
+  // Próximo leva à etapa provisória; voltar pela trilha mantém o resultado e libera o Próximo na hora
+  await click('Próximo')
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Validação"]'))
+  await sameTrail('validação')
+  await page.click('ol button[aria-label="Etapa 4"]')
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Proof of Work"]'))
+  await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'done')
+  assert.equal(await hashAttr('hash'), expected.hash, `resultado mantido ao voltar ${tag}`)
+  assert.ok(await page.$eval(diffBtn(diff), (b) => b.disabled && b.getAttribute('aria-pressed') === 'true'), `dificuldade mantida ao voltar ${tag}`)
+  await visible('Próximo')
+
   await page.click('ol button[aria-label="Etapa 2"]')
   await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
   await page.waitForFunction(cont)

@@ -4,6 +4,7 @@ import StepIndicator from './components/StepIndicator'
 import HashView from './views/HashView'
 import MiningView from './views/MiningView'
 import TransactionView from './views/TransactionView'
+import ValidationView from './views/ValidationView'
 
 // Dono do progresso do tour: a trilha (etapa exibida e etapa mais avançada concluída) e os dados
 // da simulação ficam aqui, para sobreviverem à troca de tela. A TransactionView cobre as etapas 1 e 2.
@@ -12,6 +13,7 @@ export default function App() {
   const [step, setStep] = useState(1)
   const [reached, setReached] = useState(1)
   const [transaction, setTransaction] = useState(null)
+  const [mining, setMining] = useState(null) // dificuldade escolhida e nonce/hash achados na etapa 4
 
   if (!started) return <HomeScreen onStart={() => setStarted(true)} />
 
@@ -26,8 +28,21 @@ export default function App() {
         }}
       />
     )
-  } else if (step >= 4) {
-    view = <MiningView />
+  } else if (step === 4) {
+    view = (
+      <MiningView
+        transaction={transaction}
+        mining={mining}
+        onMined={setMining}
+        // shortcut: a trilha só tem 4 círculos e a etapa 5 (validação) ainda é um esqueleto; revisar quando ela existir
+        onContinue={() => {
+          setReached((r) => Math.max(r, 5))
+          setStep(5)
+        }}
+      />
+    )
+  } else if (step >= 5) {
+    view = <ValidationView />
   } else {
     view = (
       <TransactionView
@@ -36,6 +51,7 @@ export default function App() {
         transaction={transaction}
         onSend={(t) => {
           setTransaction(t)
+          setMining(null)
           setReached(2)
           setStep(2)
         }}
@@ -47,6 +63,7 @@ export default function App() {
         onInvalidate={(n) => {
           setReached(n)
           setTransaction(null)
+          setMining(null)
         }}
       />
     )
