@@ -1,5 +1,5 @@
 // Teste de UI no navegador real: node scripts/check-ui.mjs (ou npm run test:ui).
-// Valida: título da tela 2, ausência de rolagem, trilha clicável (só para trás) e posição dos campos.
+// Valida: título da tela 2, ausência de rolagem, trilha e bolinhas de subtela clicáveis (só para trás) e posição dos campos.
 // Usa o Chrome instalado (CHROME_PATH para outro caminho) e sobe o próprio servidor do Vite.
 import assert from 'node:assert/strict'
 import puppeteer from 'puppeteer-core'
@@ -17,6 +17,7 @@ const noScroll = (page, label, horizontalOnly = false) =>
     if (!horizontalOnly) assert.ok(sh <= h, `${label}: rolagem vertical (${sh} > ${h})`)
   })
 const box = (page, sel) => page.$eval(sel, (el) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right } })
+const dot = (i, n) => `ol[aria-label="Partes da etapa"] button[aria-label="Parte ${i} de ${n}"]`
 const enabled = (page, n) => page.$eval(`ol button[aria-label^="Etapa ${n}"]`, (b) => !b.disabled)
 
 // reduce=true torna a digitação instantânea (rápido); reduce=false roda com animações reais
@@ -43,8 +44,12 @@ async function run(width, height, reduce = true) {
   assert.ok(await enabled(page, 1))
   for (const n of [2, 3, 4]) assert.ok(!(await enabled(page, n)), `etapa ${n} deveria estar bloqueada ${tag}`)
 
+  // Subtelas da etapa 1: só a introdução liberada no começo
+  assert.equal((await page.$$('ol[aria-label="Partes da etapa"] button')).length, 3)
+  assert.ok(!(await page.$eval(dot(1, 3), (b) => b.disabled)) && (await page.$eval(dot(2, 3), (b) => b.disabled)) && (await page.$eval(dot(3, 3), (b) => b.disabled)), `bolinhas bloqueadas no começo ${tag}`)
+
   // Trilha igual ao Figma: círculos de 32px, ligações de 45px, nada esmaecido
-  const trailLook = await page.$$eval('ol button', (bs) => bs.map((x) => { const r = x.getBoundingClientRect(); return [r.width, getComputedStyle(x).opacity, getComputedStyle(x).fontWeight] }))
+  const trailLook = await page.$$eval('ol[aria-label="Etapas da simulação"] > li > button', (bs) => bs.map((x) => { const r = x.getBoundingClientRect(); return [r.width, getComputedStyle(x).opacity, getComputedStyle(x).fontWeight] }))
   for (const [w, opacity, weight] of trailLook) assert.ok(w === 32 && opacity === '1' && weight === '400', `trilha fora do design do Figma ${tag}`)
   assert.equal(await page.$eval('ol li[aria-hidden] img', (i) => i.getBoundingClientRect().width), 45, `ligação da trilha deve ter 45px ${tag}`)
 
@@ -67,11 +72,13 @@ async function run(width, height, reduce = true) {
   // Fluxo: preencher, enviar, voltar e invalidar
   await page.type('input[name=from]', 'Alice'); await page.type('input[name=amount]', '50'); await page.type('input[name=to]', 'Bob')
   await page.waitForFunction(() => { const b = document.querySelector('button[type=submit]'); return b && !b.closest('[inert]') })
+  assert.ok(!(await page.$eval(dot(2, 3), (b) => b.disabled)) && (await page.$eval(dot(3, 3), (b) => b.disabled)), `bolinha 2 liberada ao preencher ${tag}`)
   await noScroll(page, `preenchida ${tag}`, mobile)
   await page.click('button[type=submit]')
   await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
   await noScroll(page, `enviada ${tag}`, mobile)
   assert.ok(await enabled(page, 2) && !(await enabled(page, 3)), `após enviar: 2 liberada, 3 bloqueada ${tag}`)
+  assert.ok(!(await page.$eval(dot(3, 3), (b) => b.disabled)) && (await page.$eval(dot(3, 3), (b) => b.getAttribute('aria-current'))) === 'step', `bolinha 3 atual após enviar ${tag}`)
 
   // Dados lado a lado, sem caixa estática; contorno pontilhado e animado
   const tops = await page.$$eval('[data-testid=candidate-block] dt', (els) => els.map((e) => [e.getBoundingClientRect().top, e.getBoundingClientRect().left]))
@@ -84,14 +91,17 @@ async function run(width, height, reduce = true) {
     const o1 = await off(); await new Promise((r) => setTimeout(r, 300)); assert.notEqual(o1, await off(), 'contorno pontilhado deve animar')
   }
 
-  await page.click('ol button[aria-label="Etapa 1"]')
+  // Bolinhas: voltar à subtela 2 reabre o formulário e tira a transação do bloco; a 3 a devolve
+  await page.click(dot(2, 3))
   await page.waitForSelector('input[name=from]')
-  assert.equal(await page.$('[data-testid=candidate-block] dl'), null, 'voltar à etapa 1 tira a transação do bloco')
+  assert.equal(await page.$('[data-testid=candidate-block] dl'), null, 'voltar à subtela 2 tira a transação do bloco')
   assert.ok(await enabled(page, 2), `etapa 2 segue liberada ao voltar ${tag}`)
-  await page.click('ol button[aria-label="Etapa 2"]')
+  await page.click(dot(1, 3))
+  await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('livro-razão digital'))
+  await page.click(dot(3, 3))
   await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
 
-  // Continuar leva à etapa 3; a trilha volta à etapa 2 com a transação e o botão intactos
+  // Continuar leva à etapa 2; a trilha volta à etapa 2 com a transação e o botão intactos
   const cont = () => [...document.querySelectorAll('button')].find((b) => b.textContent === 'Continuar' && !b.closest('[inert]'))
   await page.waitForFunction(cont)
   await noScroll(page, `continuar ${tag}`, mobile)
@@ -105,7 +115,7 @@ async function run(width, height, reduce = true) {
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.textContent === 'Continuar').click())
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Geração de Hash"]'))
   await sameTrail('hash')
-  assert.ok(await enabled(page, 3), `etapa 3 liberada após continuar ${tag}`)
+  assert.ok(await enabled(page, 2) && !(await enabled(page, 3)), `etapa 3 só abre após o Próximo ${tag}`)
 
   // Tela de Hashing: campos com a transação, "Alterar" só ao digitar, hash refeito, texto trocado e "Próximo" no fim
   const visible = (text) => page.waitForFunction((t) => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === t && !b.closest('[inert]')), {}, text)
@@ -126,6 +136,7 @@ async function run(width, height, reduce = true) {
   assert.equal((await hash()).length, 64)
   await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('completamente diferente'))
   await visible('Próximo')
+  assert.ok(!(await page.$eval(dot(2, 2), (b) => b.disabled)), `bolinha do resultado liberada ${tag}`)
   assert.ok(await hidden('Alterar'), 'Alterar some depois de aplicar')
   await noScroll(page, `hashing alterado ${tag}`, mobile)
   if (!mobile) {
@@ -137,6 +148,12 @@ async function run(width, height, reduce = true) {
     assert.ok(Math.abs(prox.right - continuarBox.right) <= 1, `Continuar e Próximo em posições diferentes ${tag}`)
     assert.ok(height - prox.mid >= height * 0.07, `Próximo colado no rodapé ${tag}`)
   }
+  // Bolinhas da etapa 2: voltar à introdução e ao resultado, sem esconder o Próximo
+  await page.click(dot(1, 2))
+  await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('Experimente'))
+  await visible('Próximo')
+  await page.click(dot(2, 2))
+  await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('completamente diferente'))
   await page.focus('input[name=from]'); await page.keyboard.press('Backspace') // devolve o dado original
   await visible('Alterar'); await click('Alterar')
   await page.waitForFunction((h) => document.querySelector('[data-testid=hash]').dataset.hash === h, {}, h0)
@@ -146,7 +163,7 @@ async function run(width, height, reduce = true) {
   await click('Próximo')
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Proof of Work"]'))
   await sameTrail('mineração')
-  assert.ok(await enabled(page, 4), `etapa 4 liberada após Próximo ${tag}`)
+  assert.ok(await enabled(page, 3) && !(await enabled(page, 4)), `etapa 3 liberada após Próximo ${tag}`)
 
   // Proof of Work: a mineração só começa com a escolha da dificuldade; roleta por posição, travamento e Próximo no fim
   const pause = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -159,6 +176,7 @@ async function run(width, height, reduce = true) {
   await noScroll(page, `pow texto 1 ${tag}`, mobile)
   assert.equal(await hashAttr('state'), 'idle', `a mineração só começa depois da escolha ${tag}`)
   assert.ok(await hidden('Próximo'))
+  assert.ok((await page.$eval(dot(2, 3), (b) => b.disabled)) && (await page.$eval(dot(3, 3), (b) => b.disabled)), `bolinhas bloqueadas antes da escolha ${tag}`)
   await page.click(diffBtn(diff))
   assert.ok(await page.$eval(diffBtn(1 + (diff % 3)), (b) => b.disabled), `seletor desabilitado após a escolha ${tag}`)
   assert.equal(await page.$eval(diffBtn(diff), (b) => b.getAttribute('aria-pressed')), 'true')
@@ -191,11 +209,21 @@ async function run(width, height, reduce = true) {
   await visible('Próximo')
   await noScroll(page, `pow resolvido ${tag}`, mobile)
 
-  // Próximo leva à etapa provisória; voltar pela trilha mantém o resultado e libera o Próximo na hora
+  // Bolinhas da mineração: reler os textos não refaz a mineração nem esconde o Próximo
+  const said = (part) => wait((t) => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes(t), part)
+  await page.click(dot(1, 3)); await said('O primeiro passo')
+  assert.equal(await hashAttr('state'), 'done', `reler a introdução não refaz a mineração ${tag}`)
+  await page.click(dot(2, 3)); await said(`dificuldade ${diff}`)
+  assert.equal(await hashAttr('state'), 'done')
+  await page.click(dot(3, 3)); await said('Observe o nonce')
+  await visible('Próximo')
+
+  // Próximo leva à etapa 4 (esqueleto de Imutabilidade); voltar pela trilha mantém o resultado e libera o Próximo na hora
   await click('Próximo')
-  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Validação"]'))
-  await sameTrail('validação')
-  await page.click('ol button[aria-label="Etapa 4"]')
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Imutabilidade"]'))
+  await sameTrail('imutabilidade')
+  assert.ok(await enabled(page, 4))
+  await page.click('ol button[aria-label="Etapa 3"]')
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Proof of Work"]'))
   await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'done')
   assert.equal(await hashAttr('hash'), expected.hash, `resultado mantido ao voltar ${tag}`)
@@ -203,8 +231,7 @@ async function run(width, height, reduce = true) {
   await visible('Próximo')
 
   await page.click('ol button[aria-label="Etapa 2"]')
-  await page.waitForFunction(() => document.querySelector('[data-testid=candidate-block] dl'))
-  await page.waitForFunction(cont)
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Geração de Hash"]'))
 
   await page.click('ol button[aria-label="Etapa 1"]')
   await page.waitForSelector('input[name=from]')
@@ -219,7 +246,7 @@ try {
   for (const [w, h, reduce] of [[1280, 720], [1366, 768], [1920, 1080, false], [375, 800]]) await run(w, h, reduce)
   console.log('Todas as verificações passaram')
 } catch (e) {
-  console.error('FALHOU:', e.message)
+  console.error('FALHOU:', e.stack.split('\n').slice(0, 4).join('\n'))
   process.exitCode = 1
 } finally {
   await browser.close()

@@ -50,7 +50,18 @@ export default function SpinHash({ hash, phase, zeros, onLocked }) {
       raf = requestAnimationFrame(frame)
     }
     raf = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(raf)
+    // clique duplo durante o travamento mostra o hash final de uma vez
+    const skip = () => {
+      if (phase !== 'locking') return
+      cancelAnimationFrame(raf)
+      setView({ text: target.join(''), locked: LENGTH })
+      callback.current?.()
+    }
+    window.addEventListener('dblclick', skip)
+    return () => {
+      window.removeEventListener('dblclick', skip)
+      cancelAnimationFrame(raf)
+    }
   }, [phase, hash, reduce])
 
   const live = !reduce && (phase === 'spinning' || phase === 'locking')

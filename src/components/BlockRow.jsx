@@ -15,7 +15,7 @@ export default function BlockRow({ transaction, previous, children, solved = fal
   const reduce = useReducedMotion()
   return (
     <div className="-ml-[calc(var(--w2)*0.4)] flex items-center" style={{ '--w2': size }}>
-      <div className="flex aspect-[380/340] w-[calc(var(--w2)*0.795)] shrink-0 items-center justify-end rounded-[30px] border-3 border-neon bg-black p-4">
+      <div className="flex aspect-[380/340] w-[calc(var(--w2)*0.795)] shrink-0 items-center justify-end rounded-[30px] border-3 border-neon bg-black py-4 pr-[clamp(1.25rem,3vw,2.5rem)] pl-4">
         {previous}
       </div>
       <img src={lineDashed} alt="" className="shrink-0" />

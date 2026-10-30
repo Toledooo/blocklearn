@@ -10,7 +10,7 @@ import Typewriter from '../components/Typewriter'
 
 const TITLE = 'Proof of Work'
 const INTRO =
-  'Para que essa nova página seja aceita e registrada definitivamente, o minerador precisa iniciar um processo de validação conhecido como "Prova de Trabalho" (Proof of Work), que consiste no esforço computacional de encontrar um hash válido que identifique esse bloco recém-formado.\n\nO primeiro passo é decidir o quão difícil será esse quebra-cabeça: escolha uma dificuldade nos botões da tela.'
+  'Para que essa nova página seja aceita e registrada definitivamente, o minerador precisa iniciar um processo de validação conhecido como "Prova de Trabalho" (Proof of Work), que consiste no esforço computacional de encontrar um hash válido que identifique esse bloco recém-formado.\n\nO primeiro passo é decidir o quão difícil será esse quebra-cabeça: escolha uma dificuldade nos botões da tela.\n\nNa vida real, um bloco reúne dezenas ou centenas de transações; aqui, para simplificar, ele leva apenas a sua.'
 const NONCE_TEXT =
   'O grande desafio da mineração é que a rede exige que o hash gerado comece com uma quantidade específica de zeros. Como as transações e o hash anterior não podem ser alterados, o computador do minerador fica mudando o valor do nonce (incrementando um de cada vez) e gerando novos hashes repetidamente, num processo de tentativa e erro ultrarrápido. Quando o computador finalmente "dá sorte" e encontra um nonce que produz o hash com os zeros exigidos, o quebra-cabeça é resolvido e o bloco é adicionado com segurança à corrente.\n\nObserve o nonce subindo no bloco da direita enquanto o campo Hash gira: é a busca acontecendo.'
 const AVERAGE = { 1: '16', 2: '256', 3: '4.096' }
@@ -21,13 +21,28 @@ const SPIN_MS = 2500 // a roleta gira por pelo menos isso, mesmo se o laço real
 const HOLD_MS = 2000 // tempo para ler o texto da dificuldade antes de ele dar lugar ao texto da mineração
 const short = (hash) => `${hash.slice(0, 8)}…`
 
-// Etapa 4 do Guided Tour: o aluno escolhe a dificuldade e vê o minerador testando nonces até o hash valer.
-export default function MiningView({ transaction, mining, onMined, onContinue }) {
+// Lista de pares rótulo/valor do bloco (uma grade de duas colunas)
+const Rows = ({ label, rows }) => (
+  <dl aria-label={label} className="grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs leading-snug text-white sm:text-sm lg:text-[clamp(0.65rem,1.8vh,0.9rem)]">
+    {rows.map(([name, value]) => (
+      <div key={name} className="col-span-2 grid grid-cols-subgrid">
+        <dt className="font-bold text-neon">{name}</dt>
+        <dd className="break-words">{value}</dd>
+      </div>
+    ))}
+  </dl>
+)
+
+// Etapa 3 do Guided Tour: o aluno escolhe a dificuldade e vê o minerador testando nonces até o hash valer.
+// Tem três subtelas (textos): introdução, dificuldade escolhida e explicação da busca pelo nonce.
+const TOPICS = ['intro', 'diff', 'nonce']
+export default function MiningView({ transaction, mining, onMined, onContinue, onSub, jump }) {
   const reduce = useReducedMotion()
   const [restored] = useState(mining !== null) // voltou pela trilha com a mineração já feita
   const [stage, setStage] = useState(restored ? 2 : 0) // 0 título, 1 texto, 2 tudo digitado
   const [topic, setTopic] = useState(restored ? 'nonce' : 'intro') // texto exibido: intro | diff | nonce
   const [pending, setPending] = useState(null) // próximo texto: o atual é apagado antes
+  const [maxSub, setMaxSub] = useState(restored ? 2 : 0) // subtela mais avançada já alcançada
   const [difficulty, setDifficulty] = useState(mining?.difficulty ?? null)
   const [phase, setPhase] = useState(restored ? 'done' : 'idle') // idle | spinning | locking | done
   const [result, setResult] = useState(mining)
@@ -40,6 +55,19 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
   const typed = stage >= 2
   const chosen = difficulty !== null
   const text = topic === 'intro' ? INTRO : topic === 'diff' ? diffText(difficulty) : NONCE_TEXT
+
+  // subtelas da trilha: introdução, texto da dificuldade e texto da mineração (a bolinha já avança quando o texto novo é pedido)
+  const subIndex = TOPICS.indexOf(pending ?? topic)
+  useEffect(() => {
+    onSub({ count: 3, index: subIndex, max: maxSub })
+  }, [subIndex, maxSub, onSub])
+
+  // clique numa bolinha da trilha: o texto atual é apagado e dá lugar ao da subtela pedida
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    if (jump.index <= maxSub && TOPICS[jump.index] !== (pending ?? topic)) setPending(TOPICS[jump.index])
+  }
 
   // hash de partida (nonce 0): o mesmo que o aluno viu na etapa anterior
   useEffect(() => {
@@ -79,18 +107,28 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
         setPhase('locking')
       },
     })
-    return () => counter.stop()
+    // clique duplo pula a contagem do nonce e passa direto para o travamento do hash
+    const skip = () => counter.complete()
+    window.addEventListener('dblclick', skip)
+    return () => {
+      window.removeEventListener('dblclick', skip)
+      counter.stop()
+    }
   }, [phase, result, reduce])
 
   useEffect(() => {
     if (!diffRead) return
-    const timer = setTimeout(() => setPending('nonce'), HOLD_MS)
+    const timer = setTimeout(() => {
+      setPending('nonce')
+      setMaxSub(2)
+    }, HOLD_MS)
     return () => clearTimeout(timer)
   }, [diffRead])
 
   const choose = (n) => {
     if (chosen) return
     setDifficulty(n)
+    setMaxSub(1)
     setPending('diff')
   }
 
@@ -100,15 +138,16 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
   }
 
   const stateHash = restored || result ? result?.hash : baseHash
-  const rows = [
+  const blockRows = [
     ['Bloco', String(data.index)],
-    ['De', data.from],
-    ['Para', data.to],
-    ['Valor', `${data.amount} moedas`],
     ['Hash anterior', short(GENESIS_HASH)],
     ['Dificuldade', chosen ? zerosOf(difficulty) : '—'],
     ['Nonce', <span key="n" data-testid="nonce">{nonce}</span>],
-    ['Tentativas', phase === 'idle' ? '0' : String(nonce + 1)],
+  ]
+  const txRows = [
+    ['De', data.from],
+    ['Para', data.to],
+    ['Valor', `${data.amount} moedas`],
   ]
 
   return (
@@ -132,7 +171,7 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
               setStage((s) => Math.max(s, 2))
               if (topic === 'diff') {
                 setDiffRead(true)
-                setPhase('spinning')
+                setPhase((p) => (p === 'idle' ? 'spinning' : p)) // reler o texto não minera de novo
               }
               if (topic === 'nonce') setExplained(true)
             }}
@@ -140,9 +179,9 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
         </p>
       )}
 
-      {/* Desktop: dificuldade e hash ficam na coluna da direita, logo acima do "Próximo" (mesmas colunas da BottomBar) */}
-      <div className="pointer-events-none lg:absolute lg:z-10 lg:inset-x-12 lg:bottom-[calc(clamp(1.5rem,5vh,3rem)+6rem)] lg:grid lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-x-12">
-        <div className="pointer-events-auto flex flex-col gap-4 lg:col-start-2 lg:w-full lg:max-w-[30rem] lg:justify-self-center lg:gap-[clamp(0.75rem,2.4vh,1.5rem)]">
+      {/* Desktop: dificuldade e hash ficam na coluna da direita, centradas entre os blocos e a borda direita, com folga em relação à parte de baixo */}
+      <div className="pointer-events-none lg:absolute lg:z-10 lg:inset-x-12 lg:bottom-[24vh] lg:grid lg:grid-cols-2 lg:gap-x-12">
+        <div className="pointer-events-auto flex flex-col gap-4 lg:col-start-2 lg:w-full lg:max-w-[44rem] lg:px-6 lg:justify-self-center lg:gap-[clamp(0.75rem,2.4vh,1.5rem)]">
           <FadeIn show={typed} className="flex flex-wrap items-center justify-center gap-3">
             <span id="difficulty-label" className="font-mono text-[clamp(0.9rem,2.2vh,1.25rem)] font-bold text-white">
               Dificuldade:
@@ -183,17 +222,15 @@ export default function MiningView({ transaction, mining, onMined, onContinue })
             </div>
           }
         >
-          <dl
-            aria-label="Bloco em mineração"
-            className="grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs leading-snug text-white sm:text-sm lg:text-[clamp(0.65rem,1.8vh,0.9rem)]"
-          >
-            {rows.map(([label, value]) => (
-              <div key={label} className="col-span-2 grid grid-cols-subgrid">
-                <dt className="font-bold text-neon">{label}</dt>
-                <dd className="break-words">{value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/* dados do bloco e da transação ficam em grupos separados: o bloco é o envelope, a transação é o conteúdo */}
+          <div className="flex min-w-0 flex-col gap-[clamp(0.35rem,1.2vh,0.75rem)]">
+            <Rows label="Dados do bloco" rows={blockRows} />
+            <section aria-label="Transações do bloco" className="border-t border-neon/50 pt-[clamp(0.35rem,1.2vh,0.75rem)]">
+              <p className="mb-1 font-mono text-xs font-bold text-neon sm:text-sm lg:text-[clamp(0.65rem,1.8vh,0.9rem)]">Transação</p>
+              <Rows label="Transação no bloco" rows={txRows} />
+              <p className="mt-1.5 font-mono text-[clamp(0.6rem,1.6vh,0.8rem)] leading-snug text-white/60">+ outras transações do bloco…</p>
+            </section>
+          </div>
         </BlockRow>
       </FadeIn>
 
