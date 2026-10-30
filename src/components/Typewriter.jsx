@@ -46,7 +46,13 @@ export default function Typewriter({
         callbacks.current.onDone?.()
       },
     })
-    return () => controls.stop()
+    // clique duplo pula a digitação (ou o apagar): vai direto ao fim, disparando os mesmos callbacks
+    const skip = () => count.current !== target && controls.complete()
+    window.addEventListener('dblclick', skip)
+    return () => {
+      window.removeEventListener('dblclick', skip)
+      controls.stop()
+    }
   }, [text, erase, delay, speed, eraseSpeed, reduce])
 
   return (

@@ -17,10 +17,12 @@ O foco é a clareza didática, a visualização dos dados e a interatividade, em
 
 O aluno percorre uma trilha linear de etapas, indicada por uma linha do tempo no topo. Ele pode voltar a qualquer etapa já concluída para rever ou alterar os dados, e mudar um dado invalida as etapas seguintes, como numa blockchain de verdade.
 
-1. **Transação:** preenche remetente, valor e destinatário.
-2. **Bloco candidato:** envia a transação e a vê entrar em um bloco ainda provisório, ligado ao bloco anterior.
-3. **Geração de Hash:** altera os dados da transação e vê o hash SHA-256 do bloco ser refeito.
-4. **Mineração e validação:** *(planejadas)* dificuldade (nonce), mineração visual e acoplamento à corrente.
+1. **Transação e Blocos:** preenche remetente, valor e destinatário, envia a transação e a vê entrar em um bloco ainda provisório, ligado ao bloco anterior.
+2. **Geração de Hash:** altera os dados da transação e vê o hash SHA-256 do bloco ser refeito.
+3. **Proof of Work:** escolhe a dificuldade (1 a 3 zeros) e vê o minerador testar nonces, com o hash "girando" posição por posição, até achar um hash válido.
+4. **Imutabilidade:** *(planejada)* acoplamento do bloco minerado à corrente e a quebra da corrente.
+
+Cada etapa pode ter subtelas (textos que se alternam na mesma tela), mostradas como bolinhas sob a etapa atual; é possível clicar nas já alcançadas para revê-las.
 
 Os textos explicativos aparecem como se fossem digitados (efeito *typewriter*) e sempre referenciam o que está acontecendo na tela.
 
@@ -29,9 +31,10 @@ Os textos explicativos aparecem como se fossem digitados (efeito *typewriter*) e
 | Parte | Situação |
 | :--- | :--- |
 | Tela inicial | Pronta |
-| Transação e Blocos (etapas 1 e 2) | Pronta |
-| Geração de Hash (etapa 3) | Pronta |
-| Mineração (etapa 4, esqueleto), validação e diagrama da corrente (D3) | A fazer |
+| Transação e Blocos (etapa 1) | Pronta |
+| Geração de Hash (etapa 2) | Pronta |
+| Proof of Work (etapa 3) | Pronta |
+| Imutabilidade (esqueleto) e diagrama da corrente (D3) | A fazer |
 
 ## Tecnologias
 
@@ -56,7 +59,7 @@ npm run dev
 | `npm run preview` | Serve o build |
 | `npm run lint` | Análise estática (Oxlint) |
 | `npm run test:ui` | Teste no Chrome real (usa o Chrome instalado; defina `CHROME_PATH` se ele estiver em outro caminho) |
-| `node src/core/Transaction.test.js` e `node src/core/sha256.test.js` | Testes do motor lógico, em Node puro |
+| `node src/core/Transaction.test.js`, `node src/core/sha256.test.js` e `node src/core/Block.test.js` | Testes do motor lógico, em Node puro |
 
 ## Estrutura
 

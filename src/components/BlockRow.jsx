@@ -9,18 +9,27 @@ const DATA = [
 
 // Bloco anterior (cortado na borda da tela) ligado ao bloco candidato, que começa vazio.
 // Quando há uma transação, ela "voa" até o bloco candidato: é o agrupamento dos dados em um bloco.
-export default function BlockRow({ transaction }) {
+// Na mineração, `previous` e `children` preenchem os dois blocos e `solved` destaca o bloco resolvido.
+// --w2 (largura do bloco candidato, `size`) é limitada também pela altura da janela (vh): blocos grandes sem rolagem
+export default function BlockRow({ transaction, previous, children, solved = false, size = 'clamp(10rem,min(36vw,46vh),560px)' }) {
   const reduce = useReducedMotion()
   return (
-    // --w2 (largura do bloco candidato) é limitada também pela altura da janela (vh): blocos grandes sem rolagem
-    <div className="-ml-[calc(var(--w2)*0.4)] flex items-center [--w2:clamp(10rem,min(36vw,46vh),560px)]">
-      <div className="aspect-[380/340] w-[calc(var(--w2)*0.795)] shrink-0 rounded-[30px] border-3 border-neon bg-black" />
+    <div className="-ml-[calc(var(--w2)*0.4)] flex items-center" style={{ '--w2': size }}>
+      <div className="flex aspect-[380/340] w-[calc(var(--w2)*0.795)] shrink-0 items-center justify-end rounded-[30px] border-3 border-neon bg-black py-4 pr-[clamp(1.25rem,3vw,2.5rem)] pl-4">
+        {previous}
+      </div>
       <img src={lineDashed} alt="" className="shrink-0" />
-      <div
+      <motion.div
         data-testid="candidate-block"
-        className="flex aspect-[365/340] w-(--w2) shrink-0 items-center justify-center rounded-[30px] border-3 border-neon p-3"
+        data-solved={solved}
+        animate={solved && !reduce ? { scale: [1, 1.06, 1] } : undefined}
+        transition={{ duration: 0.6 }}
+        className={`flex aspect-[365/340] w-(--w2) shrink-0 items-center justify-center rounded-[30px] border-3 border-neon p-3 transition-shadow duration-700 ${
+          solved ? 'shadow-[0_0_28px_var(--color-neon)]' : ''
+        }`}
       >
-        {transaction && (
+        {children}
+        {!children && transaction && (
           <motion.div
             initial={{ x: '60vw', opacity: 0, scale: 0.8 }}
             animate={{ x: 0, opacity: 1, scale: 1 }}
@@ -51,7 +60,7 @@ export default function BlockRow({ transaction }) {
             </dl>
           </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }

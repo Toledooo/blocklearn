@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createTransaction, isValidTransaction } from '../core/Transaction'
 import BlockRow from '../components/BlockRow'
@@ -16,21 +16,40 @@ const filledText = ({ from, amount, to }) =>
 const sentText = () =>
   'Transação enviada! Observe o bloco candidato na parte de baixo da tela: a transação entrou nele. Esse bloco ainda é provisório; só depois da mineração ele será selado e ligado ao bloco anterior.'
 
-// Orquestra a Etapa 1 do Guided Tour: coleta a transação e, ao enviar, avança para a Etapa 2.
-export default function TransactionView({ step, reached, transaction, onSend, onInvalidate, onContinue }) {
+// Orquestra a Etapa 1 do Guided Tour: coleta a transação e a envia para um bloco candidato.
+// Tem três subtelas (textos): introdução, explicação pós-preenchimento e transação enviada.
+const TOPICS = ['intro', 'filled', 'sent']
+export default function TransactionView({ reached, transaction, onSend, onInvalidate, onContinue, onSub, jump }) {
   // Ao voltar de outra tela a view remonta: recupera os dados e o texto da etapa em vez de recomeçar do zero
   const [values, setValues] = useState(
     transaction ? { from: transaction.from, amount: String(transaction.amount), to: transaction.to } : { from: '', amount: '', to: '' },
   )
   const [stage, setStage] = useState(reached > 1 ? 3 : 0) // 0 título, 1 explicação, 2 instrução, 3 tudo digitado
-  const [shown, setShown] = useState(() => (step === 2 ? sentText() : reached > 1 ? filledText(values) : INTRO)) // texto de explicação atual
-  const [pending, setPending] = useState(null) // 'filled' | 'sent': o texto atual é apagado antes
+  const [topic, setTopic] = useState(reached > 1 ? 'filled' : 'intro') // subtela exibida: intro | filled | sent
+  const [shown, setShown] = useState(() => (reached > 1 ? filledText(values) : INTRO)) // texto de explicação atual
+  const [pending, setPending] = useState(null) // próxima subtela: o texto atual é apagado antes
   const [explained, setExplained] = useState(false) // a explicação pós-preenchimento terminou
 
   const typed = stage === 3
   const allFilled = isValidTransaction(values)
   const erasing = pending !== null
   const introActive = shown === INTRO && !erasing
+  const current = pending ?? topic
+  const sent = current === 'sent'
+
+  // subtelas da trilha: dá para ir até a mais avançada já alcançada (a de envio só existe com a transação enviada)
+  const subIndex = TOPICS.indexOf(current)
+  const subMax = transaction ? 2 : allFilled ? 1 : 0
+  useEffect(() => {
+    onSub({ count: 3, index: subIndex, max: subMax })
+  }, [subIndex, subMax, onSub])
+
+  // clique numa bolinha da trilha: o texto atual é apagado e dá lugar ao da subtela pedida
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    if (jump.index <= subMax && TOPICS[jump.index] !== current) setPending(TOPICS[jump.index])
+  }
 
   const changeText = (key) => {
     setExplained(false)
@@ -50,13 +69,7 @@ export default function TransactionView({ step, reached, transaction, onSend, on
     e.preventDefault()
     if (!allFilled || !explained) return
     onSend(createTransaction(values))
-  }
-
-  // A trilha (no App) troca a etapa; a explicação acompanha a etapa exibida
-  const [lastStep, setLastStep] = useState(step)
-  if (step !== lastStep) {
-    setLastStep(step)
-    changeText(step === 1 ? 'filled' : 'sent')
+    changeText('sent')
   }
 
   return (
@@ -75,12 +88,13 @@ export default function TransactionView({ step, reached, transaction, onSend, on
             erase={erasing}
             onErased={() => {
               // o texto é montado só agora, com os valores já completos que o aluno terminou de digitar
-              setShown(pending === 'filled' ? filledText(values) : sentText())
+              setShown(pending === 'intro' ? INTRO : pending === 'filled' ? filledText(values) : sentText())
+              setTopic(pending)
               setPending(null)
             }}
             onDone={() => {
               setStage((s) => Math.max(s, 2))
-              setExplained(shown !== INTRO)
+              if (shown !== INTRO) setExplained(true)
             }}
           />
         </p>
@@ -90,16 +104,16 @@ export default function TransactionView({ step, reached, transaction, onSend, on
           centralizados no espaço que sobra à direita e na vertical entre o meio da tela e o rodapé */}
       <div className="flex flex-col-reverse gap-8 lg:col-span-2 lg:row-start-3 lg:min-h-[50dvh] lg:flex-row lg:gap-0">
         <FadeIn show={typed} className="lg:mb-[7vh] lg:self-end">
-          <BlockRow transaction={step >= 2 ? transaction : null} />
+          <BlockRow transaction={sent ? transaction : null} />
         </FadeIn>
 
         <div className="flex flex-1 items-center justify-center lg:-mr-12">
           <AnimatePresence>
-            {step === 1 && (
+            {!sent && (
               <motion.form
                 key="form"
                 onSubmit={handleSubmit}
-                // na 1ª vez o formulário já nasce aberto; ao voltar da etapa 2 ele se expande
+                // na 1ª vez o formulário já nasce aberto; ao voltar da subtela de envio ele se expande
                 initial={reached > 1 ? { height: 0, opacity: 0 } : false}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0, filter: 'blur(8px)' }}
@@ -136,7 +150,7 @@ export default function TransactionView({ step, reached, transaction, onSend, on
       </div>
 
       {/* Mesma posição do botão "Próximo" da tela de hash */}
-      {step === 2 && (
+      {sent && (
         <BottomBar
           floating
           right={

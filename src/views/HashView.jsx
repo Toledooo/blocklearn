@@ -16,9 +16,11 @@ const SAME =
   'Os dados voltaram a ser os originais e o hash é exatamente o mesmo de antes! Os mesmos dados sempre geram o mesmo hash, e é por isso que a rede consegue conferir um bloco: basta refazer o cálculo e comparar com o selo.'
 const KEYS = ['from', 'amount', 'to']
 
-// Etapa 3 do Guided Tour: o aluno altera os dados da transação e vê o hash do bloco ser refeito.
-// A alteração é só um teste: a transação enviada na etapa 2 continua intacta.
-export default function HashView({ transaction, onContinue }) {
+// Etapa 2 do Guided Tour: o aluno altera os dados da transação e vê o hash do bloco ser refeito.
+// A alteração é só um teste: a transação enviada na etapa 1 continua intacta.
+// Tem duas subtelas (textos): a introdução e a explicação do resultado da alteração.
+const TEXTS = { intro: INTRO, different: DIFFERENT, same: SAME }
+export default function HashView({ transaction, onContinue, onSub, jump }) {
   const initial = { from: transaction.from, amount: String(transaction.amount), to: transaction.to }
   const [values, setValues] = useState(initial)
   const [applied, setApplied] = useState(initial) // dados que geraram o hash exibido
@@ -26,7 +28,9 @@ export default function HashView({ transaction, onContinue }) {
   const [originalHash, setOriginalHash] = useState('')
   const [stage, setStage] = useState(0) // 0 título, 1 explicação, 2 tudo digitado
   const [shown, setShown] = useState(INTRO)
-  const [pending, setPending] = useState(null) // 'different' | 'same': o texto atual é apagado antes
+  const [topic, setTopic] = useState('intro') // texto exibido: intro | different | same
+  const [result, setResult] = useState(null) // resultado da última alteração: different | same
+  const [pending, setPending] = useState(null) // próximo texto: o atual é apagado antes
   const [explained, setExplained] = useState(false)
   const [altered, setAltered] = useState(false) // o aluno já clicou em "Alterar" ao menos uma vez
 
@@ -46,6 +50,21 @@ export default function HashView({ transaction, onContinue }) {
 
   const typed = stage >= 2
   const erasing = pending !== null
+
+  // subtelas da trilha: a introdução e o texto do resultado da alteração (só existe depois de "Alterar")
+  const subIndex = (pending ?? topic) === 'intro' ? 0 : 1
+  const subMax = altered ? 1 : 0
+  useEffect(() => {
+    onSub({ count: 2, index: subIndex, max: subMax })
+  }, [subIndex, subMax, onSub])
+
+  // clique numa bolinha da trilha: o texto atual é apagado e dá lugar ao da subtela pedida
+  const [seenJump, setSeenJump] = useState(jump)
+  if (jump !== seenJump) {
+    setSeenJump(jump)
+    const target = jump.index === 0 ? 'intro' : result
+    if (jump.index <= subMax && target !== (pending ?? topic)) setPending(target)
+  }
   const dirty = KEYS.some((k) => values[k].trim() !== applied[k].trim())
 
   const handleChange = (e) => setValues({ ...values, [e.target.name]: e.target.value })
@@ -57,7 +76,9 @@ export default function HashView({ transaction, onContinue }) {
     setHash(next)
     setAltered(true)
     setExplained(false)
-    setPending(next === originalHash ? 'same' : 'different')
+    const key = next === originalHash ? 'same' : 'different'
+    setResult(key)
+    setPending(key)
   }
 
   return (
@@ -83,12 +104,13 @@ export default function HashView({ transaction, onContinue }) {
             speed={0.012}
             erase={erasing}
             onErased={() => {
-              setShown(pending === 'same' ? SAME : DIFFERENT)
+              setShown(TEXTS[pending])
+              setTopic(pending)
               setPending(null)
             }}
             onDone={() => {
               setStage((s) => Math.max(s, 2))
-              setExplained(shown !== INTRO)
+              if (shown !== INTRO) setExplained(true)
             }}
           />
         </p>
