@@ -34,7 +34,7 @@ async function run(width, height, reduce = true) {
   await page.click('main button')
 
   // Correção 1: título igual ao do Figma
-  await page.waitForFunction(() => document.querySelector('h1[aria-label], h1 [aria-label]'))
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Transação e Blocos"]'))
   assert.equal(await page.$eval('h1 [aria-label]', (e) => e.getAttribute('aria-label')), 'Transação e Blocos', `título ${tag}`)
   await page.waitForFunction(() => { const i = document.querySelector('input'); return i && !i.closest('[inert]') })
   const mobile = width < 1024
@@ -223,6 +223,38 @@ async function run(width, height, reduce = true) {
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Imutabilidade"]'))
   await sameTrail('imutabilidade')
   assert.ok(await enabled(page, 4))
+
+  // Imutabilidade: corrente íntegra, alterar um bloco quebra os seguintes (e só eles), restaurar religa
+  const statuses = () => page.$$eval('[data-testid=chain-block]', (bs) => bs.map((b) => b.dataset.status).join())
+  const links = () => page.$$eval('[data-testid=chain-link]', (ls) => ls.map((l) => l.dataset.broken).join())
+  const field = (label) => `input[aria-label="${label}"]`
+  const saying = (part) => wait((t) => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes(t), part)
+  await wait(() => { const i = document.querySelector('input[aria-label="Valor do Bloco 1"]'); return i && !i.closest('[inert]') })
+  assert.equal(await statuses(), 'ok,ok,ok,ok', `corrente começa íntegra ${tag}`)
+  assert.equal(await links(), 'false,false,false')
+  await noScroll(page, `imutabilidade ${tag}`, mobile)
+  assert.ok((await page.$$('ol[aria-label="Partes da etapa"] button')).length === 2 && (await page.$eval(dot(2, 2), (b) => b.disabled)), `bolinha do resultado bloqueada no começo ${tag}`)
+  await page.type(field('Valor do Bloco 2'), '9')
+  await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,altered,broken')
+  assert.equal(await links(), 'false,false,true', `só as ligações depois do bloco alterado quebram ${tag}`)
+  await saying('Bloco 2')
+  assert.ok(!(await page.$eval(dot(2, 2), (b) => b.disabled)), `bolinha do resultado liberada após alterar ${tag}`)
+  await noScroll(page, `imutabilidade alterada ${tag}`, mobile)
+  await click('Restaurar dados')
+  await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,ok,ok')
+  assert.equal(await links(), 'false,false,false')
+  await saying('se religou')
+  await page.type(field('Para do Bloco 3'), 'x') // o último bloco: quebra só ele
+  await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,ok,altered')
+  assert.equal(await links(), 'false,false,false')
+  await page.focus(field('Para do Bloco 3')); await page.keyboard.press('Backspace') // digitar o dado original também religa
+  await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,ok,ok')
+  await page.type(field('De do Bloco 1'), 'x') // o primeiro: quebra todos os seguintes
+  await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,altered,broken,broken')
+  assert.equal(await links(), 'false,true,true')
+  await page.click(dot(1, 2)); await saying('Experimente')
+  await page.click(dot(2, 2)); await saying('Bloco 1')
+
   await page.click('ol button[aria-label="Etapa 3"]')
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Proof of Work"]'))
   await wait(() => document.querySelector('[data-testid=hash]').dataset.state === 'done')
@@ -234,6 +266,7 @@ async function run(width, height, reduce = true) {
   await page.waitForFunction(() => document.querySelector('h1 [aria-label="Geração de Hash"]'))
 
   await page.click('ol button[aria-label="Etapa 1"]')
+  await page.waitForFunction(() => document.querySelector('h1 [aria-label="Transação e Blocos"]'))
   await page.waitForSelector('input[name=from]')
   assert.equal(await page.$eval('input[name=from]', (i) => i.value), 'Alice', `dados mantidos ao voltar de outra tela ${tag}`)
   await page.type('input[name=from]', 'x') // editar invalida a etapa 2
