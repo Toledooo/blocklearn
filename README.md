@@ -35,14 +35,15 @@ Os textos explicativos aparecem como se fossem digitados (efeito *typewriter*) e
 | Geração de Hash (etapa 2) | Pronta |
 | Proof of Work (etapa 3) | Pronta |
 | Imutabilidade (etapa 4) | Pronta |
-| Diagrama da corrente em D3 | A fazer |
+| Tela final de agradecimento | Pronta |
+| Corrente de blocos (React + Framer Motion) | Pronto |
 
 ## Tecnologias
 
 - React 19 e Vite 8 (JavaScript, sem TypeScript)
 - Tailwind CSS v4 (única forma de estilização)
 - Framer Motion (animações e transições)
-- D3.js (reservado ao diagrama da corrente de blocos)
+- D3.js (reservado a diagramas de rede futuros; hoje não é usado)
 
 ## Como rodar
 

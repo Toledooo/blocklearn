@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
+import arrow from '../assets/arrow1.svg'
 import { GENESIS_HASH } from '../core/Block'
 import { buildChain, editBlock, validateChain } from '../core/Chain'
 import ChainBlock from '../components/ChainBlock'
@@ -28,7 +29,7 @@ const STEP = 0.15 // atraso entre uma ligação e a próxima na cascata de quebr
 // Etapa 4 do Guided Tour: o aluno tenta alterar um bloco já selado e vê a corrente se quebrar.
 // A alteração é só um teste: a corrente original, guardada no App, continua intacta.
 // Tem duas subtelas (textos): a introdução e o resultado da última alteração.
-export default function ImmutabilityView({ transaction, mining, chain, onChain, onSub, jump }) {
+export default function ImmutabilityView({ transaction, mining, chain, onChain, onSub, jump, onFinish }) {
   const [stage, setStage] = useState(0) // 0 título, 1 texto, 2 tudo digitado
   const [topic, setTopic] = useState('intro') // texto exibido: intro | broken:N | restored
   const [shown, setShown] = useState(INTRO)
@@ -37,6 +38,7 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
   const [results, setResults] = useState(null) // [{ status, currentHash }] da corrente exibida
   const [touched, setTouched] = useState(false) // o aluno já alterou algo ao menos uma vez
   const [lastResult, setLastResult] = useState(null) // último texto de resultado, para a bolinha 2 da trilha
+  const [explained, setExplained] = useState(false) // o texto do resultado já foi todo digitado: libera "Restaurar dados"
   const rowRef = useRef(null)
 
   const difficulty = mining.difficulty
@@ -84,6 +86,7 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
     setSeenDesired(desired)
     if (desired !== null) {
       setLastResult(desired)
+      setExplained(false)
       setPending(desired)
     }
   }
@@ -130,7 +133,10 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
               setTopic(pending)
               setPending(null)
             }}
-            onDone={() => setStage((s) => Math.max(s, 2))}
+            onDone={() => {
+              setStage((s) => Math.max(s, 2))
+              if (shown !== INTRO) setExplained(true)
+            }}
           />
         </p>
       )}
@@ -140,13 +146,24 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
       <FadeIn show={typed} className="-mx-5 sm:-mx-8 lg:-mx-12 lg:mt-auto lg:mb-[clamp(1.5rem,5vh,3rem)]">
         {/* botão numa faixa de altura fixa acima da corrente: não muda de lugar quando o texto cresce ou encolhe */}
         <div className="mb-6 flex min-h-11 justify-end px-5 sm:px-8 lg:px-12">
-          <FadeIn show={dirty} className="flex justify-end">
+          <FadeIn show={dirty && explained} className="flex justify-end">
             <button
               type="button"
               onClick={() => setEdited(null)}
               className="min-h-11 cursor-pointer rounded-[10px] border-3 border-neon bg-neon px-6 py-2 font-mono text-[clamp(1rem,2.6vh,1.5rem)] font-bold text-black"
             >
               Restaurar dados
+            </button>
+          </FadeIn>
+          {/* depois de restaurar e de ler a conclusão, o tour segue para a tela final */}
+          <FadeIn show={!dirty && explained && shown === RESTORED} className="flex justify-end">
+            <button
+              type="button"
+              onClick={onFinish}
+              className="flex min-h-11 cursor-pointer items-center gap-4 rounded-[10px] border-3 border-neon bg-neon px-6 py-2 font-mono text-[clamp(1rem,2.6vh,1.5rem)] font-bold text-black"
+            >
+              Finalizar
+              <img src={arrow} alt="" className="w-8 sm:w-10" />
             </button>
           </FadeIn>
         </div>

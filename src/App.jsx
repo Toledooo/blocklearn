@@ -2,13 +2,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useState } from 'react'
 import HomeScreen from './components/HomeScreen'
 import StepIndicator from './components/StepIndicator'
+import ClosingView from './views/ClosingView'
 import HashView from './views/HashView'
 import ImmutabilityView from './views/ImmutabilityView'
 import MiningView from './views/MiningView'
 import TransactionView from './views/TransactionView'
 
 // Dono do progresso do tour: a trilha (etapa exibida e etapa mais avançada concluída) e os dados
-// da simulação ficam aqui, para sobreviverem à troca de tela. As etapas 1 a 3 têm subtelas (textos que se alternam na mesma tela).
+// da simulação ficam aqui, para sobreviverem à troca de tela. A etapa 5 é a tela final de agradecimento, fora da trilha. As etapas 1 a 4 têm subtelas (textos que se alternam na mesma tela).
 export default function App() {
   const [started, setStarted] = useState(false)
   const [step, setStep] = useState(1)
@@ -24,6 +25,19 @@ export default function App() {
   let view
   if (!started) {
     view = <HomeScreen onStart={() => setStarted(true)} />
+  } else if (step === 5) {
+    view = (
+      <ClosingView
+        onRestart={() => {
+          setStarted(false)
+          setStep(1)
+          setReached(1)
+          setTransaction(null)
+          setMining(null)
+          setChain(null)
+        }}
+      />
+    )
   } else if (step === 2) {
     view = (
       <HashView
@@ -54,7 +68,7 @@ export default function App() {
       />
     )
   } else if (step === 4) {
-    view = <ImmutabilityView onSub={setSub} jump={jump} transaction={transaction} mining={mining} chain={chain} onChain={setChain} />
+    view = <ImmutabilityView onSub={setSub} jump={jump} transaction={transaction} mining={mining} chain={chain} onChain={setChain} onFinish={() => setStep(5)} />
   } else {
     view = (
       <TransactionView
@@ -87,7 +101,7 @@ export default function App() {
     <div className="relative bg-black">
       {/* Trilha única, sempre visível e na mesma posição em todas as telas: no desktop fica na coluna da
           direita, na altura do título (mesmas colunas e tamanho de título das telas); no celular, no topo */}
-      {started && (
+      {started && step < 5 && (
       <div className="pointer-events-none absolute inset-x-5 top-5 z-10 sm:inset-x-8 lg:inset-x-12 lg:top-6 lg:grid lg:h-[calc(var(--t)*1.25)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-center lg:gap-x-12 lg:[--t:clamp(2.25rem,min(5vw,8vh),80px)]">
         <div className="pointer-events-auto w-fit lg:col-start-2 lg:justify-self-center">
           <StepIndicator current={step} reached={reached} onSelect={setStep} sub={sub} onSubSelect={(index) => setJump({ index })} />
