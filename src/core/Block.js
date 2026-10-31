@@ -1,7 +1,8 @@
 import { sha256Hex } from './sha256.js'
 
-// O primeiro bloco da corrente não tem antecessor, então o "hash anterior" dele é um valor combinado: só zeros.
-export const GENESIS_HASH = '0'.repeat(64)
+// O primeiro bloco da simulação não tem antecessor real, então o "hash anterior" dele é o hash de um bloco
+// anterior fictício, fixo (SHA-256 de "BlockLearn"), para a corrente parecer vinda de um histórico.
+export const GENESIS_HASH = 'e45865447f80f846684dc7e8ee6f28fc40175ef9157eb7931f26d3b11d38fb31'
 
 // O hash de um bloco mistura tudo o que o identifica: posição (índice), dados da transação,
 // hash do bloco anterior e nonce. É isso que prende um bloco ao anterior e o torna inviolável:
