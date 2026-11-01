@@ -43,7 +43,6 @@ Os textos explicativos aparecem como se fossem digitados (efeito *typewriter*) e
 - React 19 e Vite 8 (JavaScript, sem TypeScript)
 - Tailwind CSS v4 (única forma de estilização)
 - Framer Motion (animações e transições)
-- D3.js (reservado a diagramas de rede futuros; hoje não é usado)
 
 ## Como rodar
 
@@ -67,11 +66,11 @@ npm run dev
 
 ```
 src/
-├── core/        Motor da blockchain: funções puras, sem React, Framer ou D3
+├── core/        Motor da blockchain: funções puras, sem React ou Framer
 ├── components/  Elementos de interface reutilizáveis
 ├── views/       Telas e orquestração da simulação
 └── assets/      Imagens e ícones
-rules/           Regras de arquitetura, core, D3 e UI do projeto
+rules/           Regras de arquitetura, core e UI do projeto
 docs/agents/     Configuração das skills de agentes
 ```
 

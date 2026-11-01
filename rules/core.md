@@ -4,7 +4,7 @@
 Este contexto aplica-se exclusivamente aos arquivos localizados no diretório `src/core/`. Aqui reside o motor da aplicação educacional: as estruturas de dados fundamentais, os algoritmos de criptografia e a mecânica de validação da Blockchain.
 
 ## 2. Restrições Arquiteturais
-* **Isolamento de Interface:** É estritamente proibido importar bibliotecas de renderização ou animação (React, hooks, Framer Motion, D3.js) nestes arquivos.
+* **Isolamento de Interface:** É estritamente proibido importar bibliotecas de renderização ou animação (React, hooks, Framer Motion) nestes arquivos.
 * **Linguagem:** JavaScript (ES6+).
 * **Independência Ambiental:** As classes e módulos devem ser projetados para rodar independentemente, podendo ser executados e testados em um ambiente Node.js puro, sem depender do navegador ou de eventos da DOM.
 
