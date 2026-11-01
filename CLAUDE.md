@@ -35,7 +35,7 @@ Existem `src/App.jsx` (dono do progresso do tour (`step`, `reached`, a transa√ß√
 
 ### Issue tracker
 
-Issues no GitHub Issues do repo (`Toledooo/blockchain`), via CLI `gh`. Ver `docs/agents/issue-tracker.md`.
+Issues no GitHub Issues do repo (`Toledooo/blocklearn`), via CLI `gh`. Ver `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
