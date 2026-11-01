@@ -19,7 +19,7 @@ Criar a base do projeto educativo Blockchain (simulador) e implementar a tela in
 
 ## 4. Tarefas do Desenvolvimento
 1. Inicializar o projeto Vite com React (`npm create vite@latest`).
-2. Instalar dependências: `tailwindcss`, `framer-motion`, `d3` (para visualizações futuras, embora esta tela inicial não use D3 ainda).
+2. Instalar dependências: `tailwindcss`, `framer-motion`.
 3. Criar `src/components/HomeScreen.jsx` replicando a estrutura do design Figma (`node-id=3-284`):
    - Container preto (`bg-black`, `size-full` / `h-screen`, `relative`).
    - `h1` com texto "BlockLearn" (`text-[#b6ff2e]`, `font-bold`).

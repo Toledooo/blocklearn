@@ -5,7 +5,6 @@ Este contexto aplica-se aos arquivos localizados nos diretórios `src/components
 
 ## 2. Restrições Arquiteturais e Lógicas
 * **Separação de Preocupações:** É estritamente proibido implementar lógica criptográfica (como cálculo de hashes ou laços de mineração) nestes componentes. O React deve apenas importar as instâncias de `src/core/`, chamar seus métodos e refletir o resultado no estado visual.
-* **Isolamento do D3.js:** Não misture lógica de desenho do D3.js dentro de componentes padrão do React. A visualização de rede/cadeia será tratada em um contexto separado. Foque aqui apenas na interface de usuário tradicional (formulários, botões, modais e balões explicativos).
 
 ## 3. Padrões de Componentização
 * **Componentes Funcionais e Hooks:** Utilize exclusivamente componentes funcionais e *React Hooks* (`useState`, `useEffect`, `useCallback`, etc.).
@@ -36,5 +35,5 @@ Como o objetivo do sistema é o ensino guiado de iniciantes, a IA deve gerar aut
 * **Medidas fluidas:** Evite larguras e posições fixas em `px` (ex: `right-[161px]`, `top-[701px]` vindos do Figma). Converta-as para layouts com flex/grid, `max-w-*`, `w-full`, espaçamentos e `clamp()`/classes responsivas. Tamanhos de fonte grandes (ex: título de 128px) devem escalar por breakpoint (ex: `text-5xl md:text-8xl lg:text-[128px]`).
 * **Altura da tela:** Prefira `min-h-screen`/`min-h-dvh` a `h-screen`, para que o conteúdo não seja cortado em telas baixas ou com teclado virtual aberto.
 * **Alvos de toque:** Botões e campos devem ter no mínimo 44x44px em telas de toque.
-* **Animações:** Balões explicativos, modais e o diagrama D3 (usar `viewBox` e largura 100% no SVG) devem se adaptar à largura disponível; respeite `prefers-reduced-motion` (`useReducedMotion` do Framer Motion).
+* **Animações:** Balões explicativos e modais devem se adaptar à largura disponível; respeite `prefers-reduced-motion` (`useReducedMotion` do Framer Motion).
 * **Fidelidade ao Figma:** O design do Figma é a referência para o desktop; nos demais tamanhos, preserve a hierarquia visual, as cores e a tipografia, adaptando apenas o layout.

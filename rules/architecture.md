@@ -7,7 +7,7 @@ Você está atuando como Engenheiro Front-end e Desenvolvedor React para constru
 * **Framework Principal:** React inicializado via Vite.
 * **Linguagem:** JavaScript (ES6+).
 * **Animações e Transições:** Framer Motion (para interface, balões explicativos e transições de estado).
-* **Visualização de Dados:** a corrente de blocos é desenhada com React + Framer Motion. D3.js fica reservado a diagramas de rede que HTML não resolva bem (hoje não há nenhum).
+* **Visualização de Dados:** a corrente de blocos é desenhada com React + Framer Motion.
 * **Estilização:** CSS Modules ou Tailwind CSS (manter consistência na escolha aplicada no repositório).
 
 ## 3. Arquitetura de Diretórios e Responsabilidades
