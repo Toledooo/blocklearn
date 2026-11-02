@@ -154,9 +154,18 @@ export default function MiningView({ transaction, mining, onMined, onContinue, o
 
   return (
     <main className="relative flex min-h-dvh flex-col gap-4 overflow-x-clip bg-black px-5 pt-[4.5rem] pb-8 sm:px-8 lg:gap-[clamp(0.5rem,1.6vh,1rem)] lg:px-12 lg:pt-6 lg:pb-0">
-      <h1 className="font-rowdies text-4xl leading-tight font-bold text-neon sm:text-6xl lg:text-[clamp(2.25rem,min(5vw,8vh),80px)]">
-        <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage((s) => Math.max(s, 1))} />
-      </h1>
+      {/* --t é o tamanho do título; o subtítulo usa as mesmas proporções da etapa 2 */}
+      <div className="[--t:2.25rem] sm:[--t:3.75rem] lg:[--t:clamp(2.25rem,min(5vw,8vh),80px)]">
+        <h1 className="font-rowdies text-[length:var(--t)] leading-[normal] font-bold text-neon">
+          <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage((s) => Math.max(s, 1))} />
+        </h1>
+        <FadeIn
+          show={stage >= 1}
+          className="mt-[calc(var(--t)*-0.089)] pl-[calc(var(--t)*3.12)] font-mono text-[length:max(1rem,calc(var(--t)*0.267))] leading-[normal] font-bold text-neon"
+        >
+          ou Mineração
+        </FadeIn>
+      </div>
 
       {stage >= 1 && (
         <p className="font-mono text-base leading-normal font-bold whitespace-pre-line text-white lg:text-[clamp(0.8rem,min(1.5vw,2.2vh),1.5rem)]">
