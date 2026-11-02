@@ -6,10 +6,11 @@ import FadeIn from '../components/FadeIn'
 import HashField from '../components/HashField'
 import TextField from '../components/TextField'
 import Typewriter from '../components/Typewriter'
+import { formatTimestamp } from '../utils/formatTimestamp'
 
 const TITLE = 'Geração de Hash'
 const INTRO =
-  'O hash funciona como uma "impressão digital" única e inviolável de um bloco. A geração do hash começa logo depois que os computadores da rede, conhecidos como mineradores, recebem novas transações e as agrupam para formar esse novo bloco.\n\nPara criar esse hash na prática, são necessárias algumas informações do bloco: a sua posição numérica (índice), os dados contidos nas transações, o hash do bloco imediatamente anterior e um número especial e ajustável chamado nonce. Tudo isso é misturado por meio de uma fórmula matemática complexa, como o algoritmo SHA-256, que transforma esses dados de entrada em um código de tamanho fixo.\n\nExperimente: altere um dos dados ao lado e clique em "Alterar" para ver o que acontece com o hash.'
+  'O hash funciona como uma "impressão digital" única e inviolável de um bloco. A geração do hash começa logo depois que os computadores da rede, conhecidos como mineradores, recebem novas transações e as agrupam para formar esse novo bloco.\n\nPara criar esse hash na prática, são necessárias algumas informações do bloco: a sua posição numérica (índice), o momento em que a transação foi registrada (timestamp), os dados contidos nas transações, o hash do bloco imediatamente anterior e um número especial e ajustável chamado nonce. Tudo isso é misturado por meio de uma fórmula matemática complexa, como o algoritmo SHA-256, que transforma esses dados de entrada em um código de tamanho fixo.\n\nExperimente: altere um dos dados ao lado e clique em "Alterar" para ver o que acontece com o hash.'
 const DIFFERENT =
   'Você mudou os dados e o hash ficou completamente diferente, repare no campo Hash! É assim que a rede percebe qualquer adulteração: se alguém mexer em um bloco já selado, o selo antigo não bate mais com o novo. Para ver outra propriedade, devolva os dados originais e clique em "Alterar" de novo.'
 const SAME =
@@ -21,7 +22,7 @@ const KEYS = ['from', 'amount', 'to']
 // Tem duas subtelas (textos): a introdução e a explicação do resultado da alteração.
 const TEXTS = { intro: INTRO, different: DIFFERENT, same: SAME }
 export default function HashView({ transaction, onContinue, onSub, jump }) {
-  const initial = { from: transaction.from, amount: String(transaction.amount), to: transaction.to }
+  const initial = { timestamp: transaction.timestamp, from: transaction.from, amount: String(transaction.amount), to: transaction.to }
   const [values, setValues] = useState(initial)
   const [applied, setApplied] = useState(initial) // dados que geraram o hash exibido
   const [hash, setHash] = useState('')
@@ -121,6 +122,7 @@ export default function HashView({ transaction, onContinue, onSub, jump }) {
         className="flex flex-col justify-center gap-[clamp(0.75rem,2.2vh,1.5rem)] lg:col-start-2 lg:row-start-2 lg:w-full lg:max-w-[30rem] lg:justify-self-center"
       >
         <p className="text-center font-mono text-[clamp(0.9rem,2.2vh,1.5rem)] font-bold text-white">Teste alterar os dados:</p>
+        <p className="text-center font-mono text-[clamp(0.75rem,1.8vh,1.1rem)] text-white/70">Registrado em {formatTimestamp(transaction.timestamp)}</p>
         <TextField label="Nome do remetente" name="from" placeholder="Ex: João" maxLength={30} value={values.from} onChange={handleChange} />
         <TextField label="Valor" name="amount" type="number" inputMode="decimal" min="0" step="any" placeholder="Ex: 2000" value={values.amount} onChange={handleChange} />
         <TextField label="Nome do recebedor" name="to" placeholder="Ex: Maria" maxLength={30} value={values.to} onChange={handleChange} />

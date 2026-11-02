@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { hashBlock, mineBlock } from './Block.js'
 
-const data = { from: 'Alice', amount: 50, to: 'Bob' }
+const data = { timestamp: 1730000000000, from: 'Alice', amount: 50, to: 'Bob' }
 const copy = { ...data }
 
 for (const difficulty of [1, 2]) {

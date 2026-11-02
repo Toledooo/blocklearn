@@ -21,10 +21,12 @@ const dot = (i, n) => `ol[aria-label="Partes da etapa"] button[aria-label="Parte
 const enabled = (page, n) => page.$eval(`ol button[aria-label^="Etapa ${n}"]`, (b) => !b.disabled)
 
 // reduce=true torna a digitação instantânea (rápido); reduce=false roda com animações reais
+const TIMESTAMP = 1730000000000
 async function run(width, height, reduce = true) {
   const tag = `${width}x${height}`
   const page = await browser.newPage()
   await page.setViewport({ width, height })
+  await page.evaluateOnNewDocument((ts) => { Date.now = () => ts }, TIMESTAMP) // o timestamp da transação entra no hash: fixo, o teste consegue prever o hash
   if (reduce) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   await page.goto('http://localhost:5199')
 
@@ -82,8 +84,8 @@ async function run(width, height, reduce = true) {
 
   // Dados lado a lado, sem caixa estática; contorno pontilhado e animado
   const tops = await page.$$eval('[data-testid=candidate-block] dt', (els) => els.map((e) => [e.getBoundingClientRect().top, e.getBoundingClientRect().left]))
-  assert.equal(tops.length, 3)
-  if (!mobile) assert.ok(tops.every(([t], i) => Math.abs(t - tops[0][0]) < 4 && (i === 0 || tops[i][1] > tops[i - 1][1])), `dados devem ficar lado a lado ${tag}`)
+  assert.equal(tops.length, 4)
+  if (!mobile) { const row = tops.slice(1); assert.ok(tops[0][0] < row[0][0] && row.every(([t], i) => Math.abs(t - row[0][0]) < 4 && (i === 0 || row[i][1] > row[i - 1][1])), `data em cima e os outros dados lado a lado ${tag}`) }
   assert.equal(await page.$eval('[data-testid=candidate-block] dl', (e) => getComputedStyle(e).borderTopWidth), '0px', 'dados não devem ter borda estática')
   assert.equal(await page.$eval('[data-testid=candidate-block] svg rect', (e) => getComputedStyle(e).strokeDasharray), '8px, 8px', 'contorno deve ser pontilhado')
   const off = () => page.$eval('[data-testid=candidate-block] svg rect', (e) => getComputedStyle(e).strokeDashoffset)
@@ -171,7 +173,7 @@ async function run(width, height, reduce = true) {
   const diffBtn = (n) => `button[aria-label^="Dificuldade ${n}"]`
   const wait = (fn, ...args) => page.waitForFunction(fn, {}, ...args)
   const diff = reduce ? 1 : 2
-  const expected = await mineBlock({ from: 'Alice', amount: 50, to: 'Bob' }, diff)
+  const expected = await mineBlock({ timestamp: TIMESTAMP, from: 'Alice', amount: 50, to: 'Bob' }, diff)
   await wait((s) => { const b = document.querySelector(s); return b && !b.closest('[inert]') }, diffBtn(1))
   await noScroll(page, `pow texto 1 ${tag}`, mobile)
   assert.equal(await hashAttr('state'), 'idle', `a mineração só começa depois da escolha ${tag}`)

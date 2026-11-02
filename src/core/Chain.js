@@ -1,16 +1,16 @@
 import { GENESIS_HASH, hashBlock, mineBlock } from './Block.js'
 
 // Corrente de blocos: cada bloco guarda o hash do anterior, então todos ficam presos uns aos outros.
-// Um bloco da corrente é { index, from, amount, to, previousHash, nonce, hash }.
+// Um bloco da corrente é { index, timestamp, from, amount, to, previousHash, nonce, hash }.
 // A corrente é sempre tratada como imutável: toda função devolve uma lista nova, nunca altera a recebida.
 
 // Monta a corrente a partir do bloco já minerado pelo aluno e das transações dos blocos seguintes.
 // Cada novo bloco é minerado com o hash do anterior em `previousHash`, que é a "ligação" da corrente.
 export async function buildChain(first, transactions, difficulty, { signal } = {}) {
   let blocks = [first]
-  for (const { from, amount, to } of transactions) {
+  for (const { timestamp, from, amount, to } of transactions) {
     const previous = blocks[blocks.length - 1]
-    const data = { index: previous.index + 1, from, amount, to, previousHash: previous.hash }
+    const data = { index: previous.index + 1, timestamp, from, amount, to, previousHash: previous.hash }
     const { nonce, hash } = await mineBlock(data, difficulty, { signal })
     blocks = [...blocks, { ...data, nonce, hash }]
   }

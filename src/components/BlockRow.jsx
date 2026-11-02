@@ -1,7 +1,9 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import lineDashed from '../assets/line-dashed.svg'
+import { formatTimestamp } from '../utils/formatTimestamp'
 
 const DATA = [
+  ['Data', (t) => formatTimestamp(t.timestamp), true], // 3º item: ocupa a linha de cima, é longo demais para dividir a linha com os outros
   ['De', (t) => t.from],
   ['Para', (t) => t.to],
   ['Valor', (t) => `${t.amount} moedas`],
@@ -51,8 +53,8 @@ export default function BlockRow({ transaction, previous, children, solved = fal
               />
             </svg>
             <dl aria-label="Transação no bloco candidato" className="relative flex flex-wrap justify-center gap-x-6 gap-y-3 font-mono text-sm text-white sm:text-base">
-              {DATA.map(([label, get]) => (
-                <div key={label} className="min-w-0 text-center">
+              {DATA.map(([label, get, wide]) => (
+                <div key={label} className={`min-w-0 text-center ${wide ? 'basis-full' : ''}`}>
                   <dt className="font-bold text-neon">{label}</dt>
                   <dd className="break-words">{get(transaction)}</dd>
                 </div>

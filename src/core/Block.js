@@ -4,12 +4,13 @@ import { sha256Hex } from './sha256.js'
 // anterior fictício, fixo (SHA-256 de "BlockLearn"), para a corrente parecer vinda de um histórico.
 export const GENESIS_HASH = 'e45865447f80f846684dc7e8ee6f28fc40175ef9157eb7931f26d3b11d38fb31'
 
-// O hash de um bloco mistura tudo o que o identifica: posição (índice), dados da transação,
-// hash do bloco anterior e nonce. É isso que prende um bloco ao anterior e o torna inviolável:
+// O hash de um bloco mistura tudo o que o identifica: posição (índice), momento do registro (timestamp),
+// dados da transação, hash do bloco anterior e nonce. É isso que prende um bloco ao anterior e o torna inviolável:
 // mexer em qualquer um desses itens muda o hash e denuncia a alteração.
 // JSON.stringify de um array evita ambiguidade (ex.: "a|b" + "c" não vira "a" + "b|c").
-export function hashBlock({ index = 1, from, amount, to, previousHash = GENESIS_HASH, nonce = 0 }) {
-  return sha256Hex(JSON.stringify([index, String(from).trim(), String(amount).trim(), String(to).trim(), previousHash, nonce]))
+export function hashBlock({ index = 1, timestamp, from, amount, to, previousHash = GENESIS_HASH, nonce = 0 }) {
+  if (!Number.isFinite(timestamp)) throw new TypeError('O bloco precisa de um timestamp numérico') // sem ele o hash mudaria sem aviso
+  return sha256Hex(JSON.stringify([index, timestamp, String(from).trim(), String(amount).trim(), String(to).trim(), previousHash, nonce]))
 }
 
 // Proof-of-Work: os dados do bloco não podem mudar, então o minerador só mexe no nonce. Ele testa

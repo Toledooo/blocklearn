@@ -3,6 +3,7 @@ import { animate, useReducedMotion } from 'framer-motion'
 import arrow from '../assets/arrow1.svg'
 import { GENESIS_HASH, hashBlock, mineBlock } from '../core/Block'
 import BlockRow from '../components/BlockRow'
+import { formatTimestamp } from '../utils/formatTimestamp'
 import BottomBar from '../components/BottomBar'
 import FadeIn from '../components/FadeIn'
 import SpinHash from '../components/SpinHash'
@@ -51,7 +52,7 @@ export default function MiningView({ transaction, mining, onMined, onContinue, o
   const [diffRead, setDiffRead] = useState(false)
   const [explained, setExplained] = useState(false)
 
-  const data = { index: 1, from: transaction.from, amount: transaction.amount, to: transaction.to, previousHash: GENESIS_HASH }
+  const data = { index: 1, timestamp: transaction.timestamp, from: transaction.from, amount: transaction.amount, to: transaction.to, previousHash: GENESIS_HASH }
   const typed = stage >= 2
   const chosen = difficulty !== null
   const text = topic === 'intro' ? INTRO : topic === 'diff' ? diffText(difficulty) : NONCE_TEXT
@@ -145,6 +146,7 @@ export default function MiningView({ transaction, mining, onMined, onContinue, o
     ['Nonce', <span key="n" data-testid="nonce">{nonce}</span>],
   ]
   const txRows = [
+    ['Data', formatTimestamp(data.timestamp)],
     ['De', data.from],
     ['Para', data.to],
     ['Valor', `${data.amount} moedas`],

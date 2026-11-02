@@ -49,8 +49,9 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
   useEffect(() => {
     if (chain) return
     const controller = new AbortController()
-    const first = { index: 1, from: transaction.from, amount: transaction.amount, to: transaction.to, previousHash: GENESIS_HASH, nonce: mining.nonce, hash: mining.hash }
-    buildChain(first, EXAMPLES, difficulty, { signal: controller.signal }).then(onChain, () => {}) // abortar não é erro
+    const first = { index: 1, timestamp: transaction.timestamp, from: transaction.from, amount: transaction.amount, to: transaction.to, previousHash: GENESIS_HASH, nonce: mining.nonce, hash: mining.hash }
+    const later = EXAMPLES.map((t, i) => ({ ...t, timestamp: transaction.timestamp + (i + 1) * 60_000 })) // um minuto depois do bloco anterior
+    buildChain(first, later, difficulty, { signal: controller.signal }).then(onChain, () => {}) // abortar não é erro
     return () => controller.abort()
   }, [chain, transaction, mining, difficulty, onChain])
 
