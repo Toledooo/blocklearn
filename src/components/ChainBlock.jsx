@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import { formatTimestamp } from '../utils/formatTimestamp'
 
 const FIELDS = [
   ['from', 'De', 'text'],
@@ -61,6 +62,8 @@ export default function ChainBlock({ block, status, currentHash, previousStale, 
             ))}
           </div>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 border-t border-white/25 pt-[clamp(0.25rem,1vh,0.5rem)] leading-snug">
+            <dt className="font-bold">Data</dt>
+            <dd className="text-white">{formatTimestamp(block.timestamp)}</dd>
             <dt className="font-bold">Hash anterior</dt>
             <dd title={block.previousHash} className={previousStale ? 'text-danger line-through' : 'text-white'}>
               {short(block.previousHash)}
