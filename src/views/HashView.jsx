@@ -89,12 +89,6 @@ export default function HashView({ transaction, onContinue, onSub, jump }) {
         <h1 className="font-rowdies text-[length:var(--t)] leading-[normal] font-bold text-neon">
           <Typewriter text={TITLE} speed={0.04} showCursor={stage === 1} onDone={() => setStage((s) => Math.max(s, 1))} />
         </h1>
-        <FadeIn
-          show={stage >= 1}
-          className="mt-[calc(var(--t)*-0.089)] pl-[calc(var(--t)*3.12)] font-mono text-[length:max(1rem,calc(var(--t)*0.267))] leading-[normal] font-bold text-neon"
-        >
-          ou Mineração
-        </FadeIn>
       </div>
 
       {stage >= 1 && (
