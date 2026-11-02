@@ -119,7 +119,7 @@ async function run(width, height, reduce = true) {
   await sameTrail('hash')
   assert.ok(await enabled(page, 2) && !(await enabled(page, 3)), `etapa 3 só abre após o Próximo ${tag}`)
 
-  // Tela de Hashing: campos com a transação, "Alterar" só ao digitar, hash refeito, texto trocado e "Próximo" no fim
+  // Tela de Hashing: campos com a transação, hash refeito ao vivo a cada tecla, texto trocado e "Próximo" no fim
   const visible = (text) => page.waitForFunction((t) => [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === t && !b.closest('[inert]')), {}, text)
   const hidden = (text) => page.evaluate((t) => ![...document.querySelectorAll('button')].some((b) => b.textContent.trim() === t && !b.closest('[inert]')), text)
   const click = (text) => page.evaluate((t) => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === t).click(), text)
@@ -128,18 +128,14 @@ async function run(width, height, reduce = true) {
   await page.waitForFunction(() => { const i = document.querySelector('input'); return i && !i.closest('[inert]') && document.querySelector('[data-testid=hash]').dataset.hash.length === 64 })
   await noScroll(page, `hashing ${tag}`, mobile)
   assert.deepEqual(await page.$$eval('input', (is) => is.map((i) => i.value)), ['Alice', '50', 'Bob'], `campos com a transação anterior ${tag}`)
-  assert.ok(await hidden('Alterar') && await hidden('Próximo'), `Alterar e Próximo começam ocultos ${tag}`)
+  assert.ok(await hidden('Próximo'), `Próximo começa oculto ${tag}`)
   const h0 = await hash()
   await page.type('input[name=from]', 'x')
-  await visible('Alterar')
-  assert.equal(await hash(), h0, 'digitar não muda o hash; só o botão Alterar')
-  await click('Alterar')
   await page.waitForFunction((h) => document.querySelector('[data-testid=hash]').dataset.hash !== h, {}, h0)
   assert.equal((await hash()).length, 64)
   await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('completamente diferente'))
   await visible('Próximo')
   assert.ok(!(await page.$eval(dot(2, 2), (b) => b.disabled)), `bolinha do resultado liberada ${tag}`)
-  assert.ok(await hidden('Alterar'), 'Alterar some depois de aplicar')
   await noScroll(page, `hashing alterado ${tag}`, mobile)
   if (!mobile) {
     // Próximo: borda direita dos campos, centro na altura do hash e na mesma posição do Continuar
@@ -157,7 +153,6 @@ async function run(width, height, reduce = true) {
   await page.click(dot(2, 2))
   await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('completamente diferente'))
   await page.focus('input[name=from]'); await page.keyboard.press('Backspace') // devolve o dado original
-  await visible('Alterar'); await click('Alterar')
   await page.waitForFunction((h) => document.querySelector('[data-testid=hash]').dataset.hash === h, {}, h0)
   await page.waitForFunction(() => document.querySelector('main p > span[aria-label]').getAttribute('aria-label').includes('exatamente o mesmo'))
   assert.ok(!(await explanation()).includes('completamente diferente'), 'texto trocado de novo')
