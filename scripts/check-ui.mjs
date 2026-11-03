@@ -240,11 +240,22 @@ async function run(width, height, reduce = true) {
   await noScroll(page, `imutabilidade alterada ${tag}`, mobile)
   if (!reduce) assert.ok(await hidden('Restaurar dados'), `Restaurar dados só aparece depois do texto ser digitado ${tag}`)
   await visible('Restaurar dados')
+  const restaurarBox = await btnBox('Restaurar dados')
   await click('Restaurar dados')
   await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,ok,ok')
   assert.equal(await links(), 'false,false,false')
   await saying('se religou')
   await visible('Finalizar') // depois de restaurar e de o texto terminar, o tour pode seguir para a tela final
+  const finalizarBox = await btnBox('Finalizar')
+  assert.ok(Math.abs(restaurarBox.right - finalizarBox.right) <= 1 && Math.abs(restaurarBox.mid - finalizarBox.mid) <= 1, `Restaurar dados e Finalizar em posições diferentes ${tag}`)
+  if (!mobile) {
+    const first = await box(page, '[data-testid=chain-block]')
+    assert.ok(first.left >= 24, `primeiro bloco colado na lateral ${tag} (${first.left}px)`)
+    await page.$eval('[data-testid=chain]', (e) => { e.scrollLeft = e.scrollWidth })
+    const lastBlock = await page.$$eval('[data-testid=chain-block]', (bs) => bs[bs.length - 1].getBoundingClientRect().right)
+    assert.ok(width - lastBlock >= 24, `último bloco colado na lateral ${tag} (${width - lastBlock}px)`)
+    await page.$eval('[data-testid=chain]', (e) => { e.scrollLeft = 0 })
+  }
   await page.type(field('Para do Bloco 3'), 'x') // o último bloco: quebra só ele
   await wait(() => [...document.querySelectorAll('[data-testid=chain-block]')].map((b) => b.dataset.status).join() === 'ok,ok,ok,altered')
   assert.equal(await links(), 'false,false,false')
