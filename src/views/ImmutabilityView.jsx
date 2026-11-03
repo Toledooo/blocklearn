@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import arrow from '../assets/arrow1.svg'
 import { GENESIS_HASH } from '../core/Block'
 import { buildChain, editBlock, validateChain } from '../core/Chain'
@@ -39,7 +39,6 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
   const [touched, setTouched] = useState(false) // o aluno já alterou algo ao menos uma vez
   const [lastResult, setLastResult] = useState(null) // último texto de resultado, para a bolinha 2 da trilha
   const [explained, setExplained] = useState(false) // o texto do resultado já foi todo digitado: libera "Restaurar dados"
-  const rowRef = useRef(null)
 
   const difficulty = mining.difficulty
   const current = edited ?? chain
@@ -67,12 +66,6 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
       clearTimeout(timer)
     }
   }, [current, difficulty])
-
-  // mostra o início da corrente cortado pela borda, como no Figma; o resto se alcança rolando dentro da faixa
-  useEffect(() => {
-    const row = rowRef.current
-    if (chain && row?.firstElementChild) row.scrollLeft = row.firstElementChild.offsetWidth * 0.66
-  }, [chain])
 
   const status = (i) => results?.[i]?.status ?? 'ok'
   const firstBad = results ? results.findIndex((r) => r.status !== 'ok') : -1
@@ -142,12 +135,13 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
         </p>
       )}
 
-      {/* Corrente: no desktop é uma fileira que rola só dentro da faixa (os blocos das pontas ficam cortados, como no Figma);
-          no celular vira uma coluna */}
+      {/* Corrente: no desktop é uma fileira que rola só dentro da faixa, com margem nas pontas para os blocos
+          não colarem na lateral da tela; no celular vira uma coluna */}
       <FadeIn show={typed} className="-mx-5 sm:-mx-8 lg:-mx-12 lg:mt-auto lg:mb-[clamp(1.5rem,5vh,3rem)]">
-        {/* botão numa faixa de altura fixa acima da corrente: não muda de lugar quando o texto cresce ou encolhe */}
-        <div className="mb-6 flex min-h-11 justify-end px-5 sm:px-8 lg:px-12">
-          <FadeIn show={dirty && explained} className="flex justify-end">
+        {/* botão numa faixa de altura fixa acima da corrente: não muda de lugar quando o texto cresce ou encolhe.
+            "Restaurar dados" e "Finalizar" dividem a mesma célula, para o canto direito ser sempre o mesmo */}
+        <div className="mb-6 grid min-h-11 justify-items-end px-5 sm:px-8 lg:px-12">
+          <FadeIn show={dirty && explained} className="col-start-1 row-start-1 flex justify-end">
             <button
               type="button"
               onClick={() => setEdited(null)}
@@ -157,7 +151,7 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
             </button>
           </FadeIn>
           {/* depois de restaurar e de ler a conclusão, o tour segue para a tela final */}
-          <FadeIn show={!dirty && explained && shown === RESTORED} className="flex justify-end">
+          <FadeIn show={!dirty && explained && shown === RESTORED} className="col-start-1 row-start-1 flex justify-end">
             <button
               type="button"
               onClick={onFinish}
@@ -169,10 +163,9 @@ export default function ImmutabilityView({ transaction, mining, chain, onChain, 
           </FadeIn>
         </div>
         <div
-          ref={rowRef}
           data-testid="chain"
           style={{ '--w': 'clamp(15rem,min(29.7vw,50vh),560px)' }}
-          className="flex flex-col items-center px-5 sm:px-8 lg:-my-8 lg:flex-row lg:overflow-x-auto lg:px-0 lg:py-8 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden"
+          className="flex flex-col items-center px-5 sm:px-8 lg:-my-8 lg:flex-row lg:overflow-x-auto lg:px-12 lg:py-8 lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden"
         >
           {!chain ? (
             <p className="font-mono text-base font-bold text-white">Montando a corrente…</p>
