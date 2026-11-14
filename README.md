@@ -79,3 +79,5 @@ A lógica criptográfica (hashes, mineração) vive somente em `src/core/`; a in
 ## Projeto acadêmico
 
 BlockLearn é um projeto educacional de código aberto. Todo texto de interface, comentário e documentação é em português do Brasil.
+
+Licença: [MIT](LICENSE).
